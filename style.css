@@ -1,10 +1,9 @@
 :root {
   --bg: #000;
   --fg: #fff;
-  --hud-bg: rgba(0,0,0,0.45);
+  --hud-bg: #000; /* pełne czarne tło HUD */
   --hud-fg: #fff;
   --hud-radius: 16px;
-  --hud-blur: 10px;
 }
 
 * { box-sizing: border-box; }
@@ -65,9 +64,7 @@ body {
   justify-content: space-between;
   gap: 12px;
   width: min(92vw, 720px);
-  background: var(--hud-bg);
-  -webkit-backdrop-filter: blur(var(--hud-blur));
-  backdrop-filter: blur(var(--hud-blur));
+  background: var(--hud-bg); /* pełne czarne tło */
   color: var(--hud-fg);
   border-radius: var(--hud-radius);
   padding: 10px 12px;
@@ -89,7 +86,7 @@ body {
   appearance: none;
   border: none;
   outline: none;
-  background: rgba(255,255,255,.12);
+  background: #111; /* przyciski też ciemne, żeby nie kontrastowały */
   color: #fff;
   padding: 8px 12px;
   border-radius: 12px;
@@ -100,7 +97,7 @@ body {
 
 @media (hover: hover) {
   .hud button:hover {
-    background: rgba(255,255,255,.2);
+    background: #222;
     cursor: pointer;
   }
 }
