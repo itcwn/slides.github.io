@@ -9,11 +9,26 @@
   <meta name="theme-color" content="#000000" />
 </head>
 <body>
+  <!-- Splash z logo -->
   <div id="splash" class="splash">
     <img src="assets/logo.png" alt="Logo" class="splash-logo" />
   </div>
+
+  <!-- Panel startowy do włączenia pełnego ekranu -->
+  <div id="fsPrompt" class="prompt">
+    <div class="prompt-card">
+      <h1>Pokaz slajdów</h1>
+      <p>Aby oglądać w trybie pełnoekranowym i zapobiec wygaszaniu ekranu, kliknij przycisk niżej.</p>
+      <button id="startBtn" class="btn-primary">Uruchom pełny ekran</button>
+      <p class="hint">Jeśli przeglądarka zapyta o zgodę — potwierdź.</p>
+    </div>
+  </div>
+
+  <!-- Kontener slajdów -->
   <main id="stage" class="stage" role="main" aria-label="Pokaz slajdów">
     <img id="slide" class="slide" alt="Slajd" />
+
+    <!-- Pasek info / sterowanie (HUD) -->
     <div class="hud">
       <div class="left">
         <button id="prevBtn" aria-label="Poprzedni slajd">⟨</button>
@@ -25,7 +40,9 @@
       </div>
     </div>
   </main>
+
   <noscript>Włącz JavaScript, aby wyświetlić pokaz slajdów.</noscript>
+
   <script src="app.js"></script>
 </body>
 </html>

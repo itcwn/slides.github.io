@@ -1,7 +1,7 @@
 :root {
   --bg: #000;
   --fg: #fff;
-  --hud-bg: #000; /* pełne czarne tło HUD */
+  --hud-bg: #000;
   --hud-fg: #fff;
   --hud-radius: 16px;
 }
@@ -53,7 +53,7 @@ body {
   -webkit-user-drag: none;
 }
 
-/* HUD (ukryty domyślnie, pokazuje się po dotknięciu) */
+/* HUD */
 .hud {
   position: fixed;
   left: 50%;
@@ -64,12 +64,11 @@ body {
   justify-content: space-between;
   gap: 12px;
   width: min(92vw, 720px);
-  background: var(--hud-bg); /* pełne czarne tło */
+  background: var(--hud-bg);
   color: var(--hud-fg);
   border-radius: var(--hud-radius);
   padding: 10px 12px;
 
-  /* domyślnie ukryty */
   opacity: 0;
   pointer-events: none;
   transition: opacity .25s ease;
@@ -86,7 +85,7 @@ body {
   appearance: none;
   border: none;
   outline: none;
-  background: #111; /* przyciski też ciemne, żeby nie kontrastowały */
+  background: #111;
   color: #fff;
   padding: 8px 12px;
   border-radius: 12px;
@@ -101,3 +100,40 @@ body {
     cursor: pointer;
   }
 }
+
+/* Prompt fullscreen */
+.prompt {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.9);
+  display: grid;
+  place-items: center;
+  z-index: 15;
+}
+.prompt.hidden { display: none; }
+
+.prompt-card {
+  width: min(92vw, 520px);
+  background: #000;
+  border: 1px solid #222;
+  border-radius: 16px;
+  padding: 24px;
+  color: #fff;
+  text-align: center;
+}
+.prompt-card h1 { margin: 0 0 8px; font-size: 24px; }
+.prompt-card p { margin: 6px 0; opacity: .9; }
+
+.btn-primary {
+  margin-top: 14px;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 12px;
+  background: #111;
+  color: #fff;
+  font-size: 16px;
+}
+.btn-primary:active { transform: translateY(1px); }
+@media (hover:hover){ .btn-primary:hover { background:#222; cursor:pointer; } }
+
+.hint { font-size: 12px; opacity: .7; }
