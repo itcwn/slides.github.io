@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Pokaz slajdów</title>
+  <link rel="preload" as="image" href="assets/logo.png">
+  <link rel="stylesheet" href="style.css" />
+  <meta name="theme-color" content="#000000" />
+</head>
+<body>
+  <div id="splash" class="splash">
+    <img src="assets/logo.png" alt="Logo" class="splash-logo" />
+  </div>
+  <main id="stage" class="stage" role="main" aria-label="Pokaz slajdów">
+    <img id="slide" class="slide" alt="Slajd" />
+    <div class="hud">
+      <div class="left">
+        <button id="prevBtn" aria-label="Poprzedni slajd">⟨</button>
+        <button id="playPauseBtn" aria-label="Pauza/Odtwarzaj">⏸</button>
+        <button id="nextBtn" aria-label="Następny slajd">⟩</button>
+      </div>
+      <div class="right">
+        <span id="counter">– / –</span>
+      </div>
+    </div>
+  </main>
+  <noscript>Włącz JavaScript, aby wyświetlić pokaz slajdów.</noscript>
+  <script src="app.js"></script>
+</body>
+</html>
