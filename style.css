@@ -1,12 +1,106 @@
-/* HUD domyślnie ukryty */
+:root {
+  --bg: #000;
+  --fg: #fff;
+  --hud-bg: rgba(0,0,0,0.45);
+  --hud-fg: #fff;
+  --hud-radius: 16px;
+  --hud-blur: 10px;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  overflow: hidden;
+}
+
+/* Splash z logo */
+.splash {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: var(--bg);
+  z-index: 10;
+  opacity: 1;
+  transition: opacity .6s ease;
+}
+.splash.hide { opacity: 0; pointer-events: none; }
+.splash-logo {
+  width: min(50vw, 280px);
+  height: auto;
+  filter: drop-shadow(0 12px 32px rgba(0,0,0,.6));
+}
+
+/* Scena i obraz */
+.stage {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: var(--bg);
+}
+.slide {
+  max-width: 100vw;
+  max-height: 100vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* HUD (ukryty domyślnie, pokazuje się po dotknięciu) */
 .hud {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: min(92vw, 720px);
+  background: var(--hud-bg);
+  -webkit-backdrop-filter: blur(var(--hud-blur));
+  backdrop-filter: blur(var(--hud-blur));
+  color: var(--hud-fg);
+  border-radius: var(--hud-radius);
+  padding: 10px 12px;
+
+  /* domyślnie ukryty */
   opacity: 0;
   pointer-events: none;
   transition: opacity .25s ease;
 }
-
-/* Widoczny HUD po dotknięciu */
 .hud.show {
   opacity: 1;
   pointer-events: auto;
+}
+
+.hud .left { display: flex; gap: 8px; }
+.hud .right { margin-left: auto; opacity: .9; font-variant-numeric: tabular-nums; }
+
+.hud button {
+  appearance: none;
+  border: none;
+  outline: none;
+  background: rgba(255,255,255,.12);
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 18px;
+  line-height: 1;
+}
+.hud button:active { transform: translateY(1px); }
+
+@media (hover: hover) {
+  .hud button:hover {
+    background: rgba(255,255,255,.2);
+    cursor: pointer;
+  }
 }
