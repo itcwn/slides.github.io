@@ -4,14 +4,14 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Pokaz slajdów</title>
-  <link rel="preload" as="image" href="assets/logo.png">
-  <link rel="stylesheet" href="style.css" />
+  <link rel="preload" as="image" href="assets/logo.png?v=20250913170735">
+  <link rel="stylesheet" href="style.css?v=20250913170735" />
   <meta name="theme-color" content="#000000" />
 </head>
 <body>
   <!-- Splash z logo -->
   <div id="splash" class="splash">
-    <img src="assets/logo.png" alt="Logo" class="splash-logo" />
+    <img src="assets/logo.png?v=20250913170735" alt="Logo" class="splash-logo" />
   </div>
 
   <!-- Panel startowy do włączenia pełnego ekranu -->
@@ -26,7 +26,10 @@
 
   <!-- Kontener slajdów -->
   <main id="stage" class="stage" role="main" aria-label="Pokaz slajdów">
-    <img id="slide" class="slide" alt="Slajd" />
+    <!-- Roboczy ekran z kontrolowaną proporcją i marginesem -->
+    <div id="workarea" class="workarea">
+      <img id="slide" class="slide" alt="Slajd" />
+    </div>
 
     <!-- Pasek info / sterowanie (HUD) -->
     <div class="hud">
@@ -34,6 +37,7 @@
         <button id="prevBtn" aria-label="Poprzedni slajd">⟨</button>
         <button id="playPauseBtn" aria-label="Pauza/Odtwarzaj">⏸</button>
         <button id="nextBtn" aria-label="Następny slajd">⟩</button>
+        <button id="settingsBtn" aria-label="Ustawienia">⚙️ Ustawienia</button>
       </div>
       <div class="right">
         <span id="counter">– / –</span>
@@ -41,8 +45,92 @@
     </div>
   </main>
 
+  <!-- Modal ustawień -->
+  <div id="settingsModal" class="modal hidden" aria-hidden="true" role="dialog" aria-label="Ustawienia wyświetlania">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h2>Ustawienia</h2>
+        <button id="closeSettingsBtn" class="icon-btn" aria-label="Zamknij">✕</button>
+      </div>
+
+      <div class="grid">
+        <div class="field">
+          <label>Proporcje roboczego ekranu</label>
+          <div class="row">
+            <select id="aspectPreset">
+              <option value="custom">Własne</option>
+              <option value="16:9">16:9</option>
+              <option value="18.5:9">18.5:9 (37:18)</option>
+              <option value="19.5:9">19.5:9</option>
+              <option value="20:9">20:9</option>
+              <option value="21:9">21:9</option>
+            </select>
+            <input id="aspectW" type="number" min="1" value="16" aria-label="Szerokość proporcji">
+            <span>:</span>
+            <input id="aspectH" type="number" min="1" value="9" aria-label="Wysokość proporcji">
+          </div>
+          <small>Ustawia ramkę, do której dopasujemy slajd (stereoparę).</small>
+        </div>
+
+        <div class="field">
+          <label>Margines wokół roboczego ekranu</label>
+          <input id="marginPct" type="range" min="0" max="20" step="1" value="0">
+          <div class="hint"><span id="marginVal">0%</span></div>
+          <small>Użyteczne, gdy chcesz zostawić czarne obramowanie.</small>
+        </div>
+
+        <div class="field">
+          <label>Tryb dopasowania</label>
+          <select id="fitMode">
+            <option value="contain">Zmieść w ramce (contain)</option>
+            <option value="cover">Wypełnij ramkę (cover)</option>
+          </select>
+          <small>„Contain” nic nie ucina, „Cover” może przyciąć brzegi, ale wypełnia.</small>
+        </div>
+
+        <div class="field">
+          <label>Wyrównanie</label>
+          <div class="row">
+            <select id="alignH">
+              <option value="center">Środek</option>
+              <option value="left">Lewo</option>
+              <option value="right">Prawo</option>
+            </select>
+            <select id="alignV">
+              <option value="center">Środek</option>
+              <option value="top">Góra</option>
+              <option value="bottom">Dół</option>
+            </select>
+          </div>
+          <small>Pozycjonowanie slajdu w ramce (przy cover).</small>
+        </div>
+
+        <div class="field">
+          <label>Stereopara</label>
+          <select id="stereoMode">
+            <option value="single">Jeden plik = dwa obrazy obok</option>
+            <option value="left-right">Dwa pliki: lewy/prawy (na później)</option>
+          </select>
+          <small>Jeśli Twoje slajdy to już jeden obraz z dwiema połówkami, wybierz „Jeden plik”.</small>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button id="saveSettingsBtn" class="btn-primary">Zapisz</button>
+        <button id="resetSettingsBtn" class="btn-ghost">Domyślne</button>
+      </div>
+
+      <div class="preview">
+        <div class="preview-stage">
+          <div id="previewFrame" class="preview-frame"></div>
+        </div>
+        <small>Podgląd: biała ramka pokazuje „roboczy ekran”.</small>
+      </div>
+    </div>
+  </div>
+
   <noscript>Włącz JavaScript, aby wyświetlić pokaz slajdów.</noscript>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=20250913170735"></script>
 </body>
 </html>

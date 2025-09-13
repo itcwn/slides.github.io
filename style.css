@@ -1,7 +1,7 @@
 :root {
   --bg: #000;
   --fg: #fff;
-  --hud-bg: #000;
+  --hud-bg: #000; /* pełne czarne tło HUD */
   --hud-fg: #fff;
   --hud-radius: 16px;
 }
@@ -43,17 +43,32 @@ body {
   place-items: center;
   background: var(--bg);
 }
-.slide {
+
+/* Roboczy ekran (workarea) */
+.workarea {
+  position: relative;
+  display: grid;
+  place-items: center;
   max-width: 100vw;
   max-height: 100vh;
+  width: 100%;
+  height: 100%;
+  margin: 0 auto;
+}
+
+/* Obraz dopasowywany wg trybu */
+.slide {
+  max-width: 100%;
+  max-height: 100%;
   width: auto;
   height: auto;
-  object-fit: contain;
+  object-fit: contain; /* domyślnie; JS może zmienić na cover */
+  object-position: center center; /* JS zmienia przy wyrównaniu */
   user-select: none;
   -webkit-user-drag: none;
 }
 
-/* HUD */
+/* HUD (ukryty domyślnie, pokazuje się po dotknięciu) */
 .hud {
   position: fixed;
   left: 50%;
@@ -63,12 +78,13 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  width: min(92vw, 720px);
-  background: var(--hud-bg);
+  width: min(92vw, 820px);
+  background: var(--hud-bg); /* pełne czarne tło */
   color: var(--hud-fg);
   border-radius: var(--hud-radius);
   padding: 10px 12px;
 
+  /* domyślnie ukryty */
   opacity: 0;
   pointer-events: none;
   transition: opacity .25s ease;
@@ -85,11 +101,11 @@ body {
   appearance: none;
   border: none;
   outline: none;
-  background: #111;
+  background: #111; /* przyciski ciemne */
   color: #fff;
   padding: 8px 12px;
   border-radius: 12px;
-  font-size: 18px;
+  font-size: 16px;
   line-height: 1;
 }
 .hud button:active { transform: translateY(1px); }
@@ -101,7 +117,7 @@ body {
   }
 }
 
-/* Prompt fullscreen */
+/* Ekran startowy / prompt */
 .prompt {
   position: fixed;
   inset: 0;
@@ -121,8 +137,16 @@ body {
   color: #fff;
   text-align: center;
 }
-.prompt-card h1 { margin: 0 0 8px; font-size: 24px; }
-.prompt-card p { margin: 6px 0; opacity: .9; }
+
+.prompt-card h1 {
+  margin: 0 0 8px;
+  font-size: 24px;
+}
+
+.prompt-card p {
+  margin: 6px 0;
+  opacity: .9;
+}
 
 .btn-primary {
   margin-top: 14px;
@@ -137,3 +161,82 @@ body {
 @media (hover:hover){ .btn-primary:hover { background:#222; cursor:pointer; } }
 
 .hint { font-size: 12px; opacity: .7; }
+
+/* Modal ustawień */
+.modal.hidden { display: none; }
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  background: rgba(0,0,0,.75);
+}
+
+.modal-card {
+  width: min(96vw, 760px);
+  max-height: 90vh;
+  overflow: auto;
+  background: #000;
+  color: #fff;
+  border: 1px solid #222;
+  border-radius: 16px;
+  padding: 16px;
+}
+
+.modal-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px;
+}
+.icon-btn {
+  background: #111; color: #fff; border: none; border-radius: 10px; padding: 6px 10px;
+}
+.icon-btn:active { transform: translateY(1px); }
+@media (hover:hover){ .icon-btn:hover { background:#222; cursor:pointer; } }
+
+.grid {
+  display: grid;
+  gap: 12px;
+}
+
+.field label { display:block; font-weight: 600; margin-bottom: 6px; }
+.field small { opacity: .8; }
+
+.row { display: flex; gap: 8px; align-items: center; }
+.row input[type=number] { width: 90px; }
+
+.modal-actions {
+  display: flex; gap: 8px; margin-top: 4px; margin-bottom: 12px;
+}
+.btn-ghost {
+  padding: 10px 14px; border: 1px solid #222; border-radius: 12px; background: transparent; color:#fff;
+}
+.btn-ghost:active { transform: translateY(1px); }
+@media (hover:hover){ .btn-ghost:hover { background:#111; cursor:pointer; } }
+
+/* Podgląd ramki roboczej */
+.preview { margin-top: 12px; }
+.preview-stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 19 / 9; /* tylko pole podglądu */
+  background: #0a0a0a;
+  border: 1px dashed #222;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+}
+.preview-frame {
+  border: 2px solid #fff;
+  border-radius: 8px;
+  width: 60%;
+  height: 60%;
+  pointer-events: none;
+  transition: width .2s ease, height .2s ease;
+}
+
+/* Przycisk Ustawienia w HUD */
+.hud #settingsBtn {
+  font-size: 16px;
+  padding: 8px 12px;
+}
