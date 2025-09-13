@@ -1,7 +1,10 @@
-// Ustawienia domyślne
-const DEFAULTS = {"intervalMs": 4000, "autoPlay": true};
-const BUILD_TOKEN = "20250913170735"; // cache-busting
+"use strict";
 
+// Ustawienia domyślne + cache-busting
+const DEFAULTS = { intervalMs: 4000, autoPlay: true };
+const BUILD_TOKEN = new URLSearchParams(location.search).get("v") || (typeof Date !== "undefined" ? String(Date.now()) : "1");
+
+// Query
 const qs = new URLSearchParams(location.search);
 const album = qs.get('album') || 'event1';
 
@@ -16,7 +19,7 @@ const hudEl = document.querySelector('.hud');
 const fsPromptEl = document.getElementById('fsPrompt');
 const startBtn = document.getElementById('startBtn');
 
-// Settings UI
+// Settings UI / workarea
 const workareaEl = document.getElementById('workarea');
 const settingsBtn = document.getElementById('settingsBtn');
 const settingsModal = document.getElementById('settingsModal');
@@ -42,16 +45,48 @@ let isPlaying = DEFAULTS.autoPlay;
 let wakeLock = null;
 
 // --- Fullscreen helpers ---
-function isFullscreen() { return document.fullscreenElement || document.webkitFullscreenElement; }
-async function requestFullscreen() { const el = document.documentElement; if (el.requestFullscreen) return el.requestFullscreen(); if (el.webkitRequestFullscreen) return el.webkitRequestFullscreen(); }
-function exitFullscreen() { if (document.exitFullscreen) return document.exitFullscreen(); if (document.webkitExitFullscreen) return document.webkitExitFullscreen(); }
+function isFullscreen() {
+  return document.fullscreenElement || document.webkitFullscreenElement;
+}
+async function requestFullscreen() {
+  const el = document.documentElement;
+  try {
+    if (el.requestFullscreen) {
+      return await el.requestFullscreen();
+    } else if (el.webkitRequestFullscreen) {
+      return el.webkitRequestFullscreen(); // iOS Safari
+    }
+  } catch (e) {
+    // ignoruj – niektóre przeglądarki wymagają gesture-only
+  }
+}
+function exitFullscreen() {
+  if (document.exitFullscreen) return document.exitFullscreen();
+  if (document.webkitExitFullscreen) return document.webkitExitFullscreen();
+}
 
 // --- Wake Lock (bez wygaszania) ---
-async function requestWakeLock() { try { if ('wakeLock' in navigator) { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => {}); document.addEventListener('visibilitychange', async () => { if (document.visibilityState === 'visible') { try { wakeLock = await navigator.wakeLock.request('screen'); } catch {} } }); } } catch {} }
+async function requestWakeLock() {
+  try {
+    if ('wakeLock' in navigator) {
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeLock.addEventListener('release', () => {});
+      document.addEventListener('visibilitychange', async () => {
+        if (document.visibilityState === 'visible') {
+          try { wakeLock = await navigator.wakeLock.request('screen'); } catch {}
+        }
+      });
+    }
+  } catch {}
+}
 
 // --- HUD tylko po dotknięciu ---
 let hudTimer = null;
-function showHUD(ms = 3000) { hudEl.classList.add('show'); clearTimeout(hudTimer); hudTimer = setTimeout(() => hudEl.classList.remove('show'), ms); }
+function showHUD(ms = 3000) {
+  hudEl.classList.add('show');
+  clearTimeout(hudTimer);
+  hudTimer = setTimeout(() => hudEl.classList.remove('show'), ms);
+}
 
 // --- Cache busting helper ---
 function bust(url) {
@@ -79,8 +114,17 @@ function show(i) {
   const nextIdx = (index + 1) % manifest.images.length;
   preload(`albums/${album}/${manifest.images[nextIdx]}`);
 }
-function play() { isPlaying = true; playPauseBtn.textContent = '⏸'; clearInterval(timer); timer = setInterval(() => show(index + 1), manifest.intervalMs || DEFAULTS.intervalMs); }
-function pause() { isPlaying = false; playPauseBtn.textContent = '▶'; clearInterval(timer); }
+function play() {
+  isPlaying = true;
+  playPauseBtn.textContent = '⏸';
+  clearInterval(timer);
+  timer = setInterval(() => show(index + 1), manifest.intervalMs || DEFAULTS.intervalMs);
+}
+function pause() {
+  isPlaying = false;
+  playPauseBtn.textContent = '▶';
+  clearInterval(timer);
+}
 
 // Gesty dotykowe (swipe)
 (function attachSwipe() {
@@ -89,7 +133,11 @@ function pause() { isPlaying = false; playPauseBtn.textContent = '▶'; clearInt
   window.addEventListener('touchend', e => {
     if (x0 == null) return;
     const dx = e.changedTouches[0].clientX - x0;
-    if (Math.abs(dx) > 40) { if (dx > 0) show(index - 1); else show(index + 1); pause(); showHUD(); }
+    if (Math.abs(dx) > 40) {
+      if (dx > 0) show(index - 1); else show(index + 1);
+      pause();
+      showHUD();
+    }
     x0 = null;
   });
 })();
@@ -107,7 +155,13 @@ nextBtn.addEventListener('click', () => { show(index + 1); pause(); showHUD(); }
 playPauseBtn.addEventListener('click', () => { isPlaying ? pause() : play(); showHUD(); });
 
 // --- Aktywacja prezentacji po świadomym kliknięciu ---
-async function activatePresentation() { try { await requestFullscreen(); } catch {} await requestWakeLock(); fsPromptEl.classList.add('hidden'); showHUD(); }
+async function activatePresentation(e) {
+  if (e && typeof e.preventDefault === 'function') e.preventDefault();
+  await requestFullscreen();
+  await requestWakeLock();
+  fsPromptEl.classList.add('hidden');
+  showHUD();
+}
 startBtn.addEventListener('click', activatePresentation);
 
 // Jeśli użytkownik wyjdzie z pełnego ekranu, pokaż z powrotem prompt
@@ -153,8 +207,17 @@ function applySettingsToUI() {
   updatePreview();
 }
 
-function openSettings() { applySettingsToUI(); settingsModal.classList.remove('hidden'); settingsModal.setAttribute('aria-hidden','false'); pause(); showHUD(9999); }
-function closeSettings() { settingsModal.classList.add('hidden'); settingsModal.setAttribute('aria-hidden','true'); }
+function openSettings() {
+  applySettingsToUI();
+  settingsModal.classList.remove('hidden');
+  settingsModal.setAttribute('aria-hidden','false');
+  pause();
+  showHUD(9999);
+}
+function closeSettings() {
+  settingsModal.classList.add('hidden');
+  settingsModal.setAttribute('aria-hidden','true');
+}
 
 settingsBtn.addEventListener('click', openSettings);
 closeSettingsBtn.addEventListener('click', closeSettings);
@@ -168,7 +231,10 @@ aspectPresetEl.addEventListener('change', () => {
   aspectHEl.value = ah;
 });
 
-marginPctEl.addEventListener('input', () => { marginValEl.textContent = `${marginPctEl.value}%`; updatePreviewLive(); });
+marginPctEl.addEventListener('input', () => {
+  marginValEl.textContent = `${marginPctEl.value}%`;
+  updatePreviewLive();
+});
 
 function updatePreviewLive() {
   const temp = { ...SETTINGS, marginPct: Number(marginPctEl.value) };
@@ -179,7 +245,10 @@ function updatePreviewLive() {
   SETTINGS = old;
 }
 
-resetSettingsBtn.addEventListener('click', () => { SETTINGS = { ...DEFAULT_SETTINGS }; applySettingsToUI(); });
+resetSettingsBtn.addEventListener('click', () => {
+  SETTINGS = { ...DEFAULT_SETTINGS };
+  applySettingsToUI();
+});
 
 saveSettingsBtn.addEventListener('click', () => {
   SETTINGS.aspectW = Math.max(1, Number(aspectWEl.value) || DEFAULT_SETTINGS.aspectW);
@@ -214,8 +283,9 @@ function applyWorkareaLayout() {
     waH = waW / targetRatio;
   }
 
-  workareaEl.style.width = `${waW}px;
-  workareaEl.style.height = `${waH}px;
+  // ✅ poprawione template stringi
+  workareaEl.style.width = `${waW}px`;
+  workareaEl.style.height = `${waH}px`;
 
   imgEl.style.objectFit = SETTINGS.fitMode;
   const posX = SETTINGS.alignH === 'left' ? 'left' : (SETTINGS.alignH === 'right' ? 'right' : 'center');
@@ -247,6 +317,7 @@ window.addEventListener('resize', applyWorkareaLayout);
     imgEl.addEventListener('load', hideSplash, { once: true });
     setTimeout(hideSplash, 3000);
 
+    // Pokaż HUD po każdym tapnięciu
     window.addEventListener('pointerdown', () => showHUD(), { passive: true });
 
     applyWorkareaLayout();
