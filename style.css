@@ -1,7 +1,7 @@
 :root {
   --bg: #000;
   --fg: #fff;
-  --hud-bg: #000; /* pełne czarne tło HUD */
+  --hud-bg: #000;
   --hud-fg: #fff;
   --hud-radius: 16px;
 }
@@ -17,226 +17,107 @@ body {
   overflow: hidden;
 }
 
-/* Splash z logo */
-.splash {
-  position: fixed;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  background: var(--bg);
-  z-index: 10;
-  opacity: 1;
-  transition: opacity .6s ease;
-}
-.splash.hide { opacity: 0; pointer-events: none; }
-.splash-logo {
-  width: min(50vw, 280px);
-  height: auto;
-  filter: drop-shadow(0 12px 32px rgba(0,0,0,.6));
-}
-
-/* Scena i obraz */
+/* Scena i workarea */
 .stage {
-  position: fixed;
-  inset: 0;
-  display: grid;
-  place-items: center;
+  position: fixed; inset: 0;
+  display: grid; place-items: center;
   background: var(--bg);
 }
-
-/* Roboczy ekran (workarea) */
 .workarea {
-  position: relative;
-  display: grid;
-  place-items: center;
-  max-width: 100vw;
-  max-height: 100vh;
-  width: 100%;
-  height: 100%;
+  position: relative; display: grid; place-items: center;
+  max-width: 100vw; max-height: 100vh;
+  width: 100%; height: 100%;
   margin: 0 auto;
 }
-
-/* Obraz dopasowywany wg trybu */
 .slide {
-  max-width: 100%;
-  max-height: 100%;
-  width: auto;
-  height: auto;
-  object-fit: contain; /* domyślnie; JS może zmienić na cover */
-  object-position: center center; /* JS zmienia przy wyrównaniu */
-  user-select: none;
-  -webkit-user-drag: none;
+  max-width: 100%; max-height: 100%;
+  width: auto; height: auto;
+  object-fit: contain; object-position: center center;
+  user-select: none; -webkit-user-drag: none;
 }
 
 /* HUD (ukryty domyślnie, pokazuje się po dotknięciu) */
 .hud {
-  position: fixed;
-  left: 50%;
-  bottom: 24px;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%);
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
   width: min(92vw, 820px);
-  background: var(--hud-bg); /* pełne czarne tło */
-  color: var(--hud-fg);
-  border-radius: var(--hud-radius);
-  padding: 10px 12px;
-
-  /* domyślnie ukryty */
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity .25s ease;
+  background: var(--hud-bg); color: var(--hud-fg);
+  border-radius: var(--hud-radius); padding: 10px 12px;
+  opacity: 0; pointer-events: none; transition: opacity .25s ease;
 }
-.hud.show {
-  opacity: 1;
-  pointer-events: auto;
-}
-
+.hud.show { opacity: 1; pointer-events: auto; }
 .hud .left { display: flex; gap: 8px; }
 .hud .right { margin-left: auto; opacity: .9; font-variant-numeric: tabular-nums; }
-
 .hud button {
-  appearance: none;
-  border: none;
-  outline: none;
-  background: #111; /* przyciski ciemne */
-  color: #fff;
-  padding: 8px 12px;
-  border-radius: 12px;
-  font-size: 16px;
-  line-height: 1;
+  appearance: none; border: none; outline: none; background: #111; color: #fff;
+  padding: 8px 12px; border-radius: 12px; font-size: 16px; line-height: 1;
 }
 .hud button:active { transform: translateY(1px); }
+@media (hover:hover){ .hud button:hover { background:#222; cursor:pointer; } }
+.hud #settingsBtn { font-size: 16px; padding: 8px 12px; }
 
-@media (hover: hover) {
-  .hud button:hover {
-    background: #222;
-    cursor: pointer;
-  }
-}
-
-/* Ekran startowy / prompt */
+/* Panel startowy (logo stale pod przyciskiem) */
 .prompt {
-  position: fixed;
-  inset: 0;
+  position: fixed; inset: 0; z-index: 15;
   background: rgba(0,0,0,0.9);
-  display: grid;
-  place-items: center;
-  z-index: 15;
+  display: grid; place-items: center;
 }
 .prompt.hidden { display: none; }
-
 .prompt-card {
   width: min(92vw, 520px);
-  background: #000;
-  border: 1px solid #222;
-  border-radius: 16px;
-  padding: 24px;
-  color: #fff;
-  text-align: center;
+  background: #000; border: 1px solid #222; border-radius: 16px;
+  padding: 24px; color: #fff; text-align: center;
 }
-
-.prompt-card h1 {
-  margin: 0 0 8px;
-  font-size: 24px;
-}
-
-.prompt-card p {
-  margin: 6px 0;
-  opacity: .9;
-}
-
 .btn-primary {
-  margin-top: 14px;
-  padding: 12px 16px;
-  border: none;
-  border-radius: 12px;
-  background: #111;
-  color: #fff;
-  font-size: 16px;
+  margin-top: 14px; padding: 12px 16px;
+  border: none; border-radius: 12px; background: #111; color: #fff; font-size: 16px;
 }
 .btn-primary:active { transform: translateY(1px); }
 @media (hover:hover){ .btn-primary:hover { background:#222; cursor:pointer; } }
 
+.brand-logo {
+  display: block; margin: 12px auto 0;
+  width: min(50vw, 220px); height: auto;
+  image-rendering: -webkit-optimize-contrast;
+}
 .hint { font-size: 12px; opacity: .7; }
 
-/* Modal ustawień */
+/* Modal ustawień (tylko margines) */
 .modal.hidden { display: none; }
 .modal {
-  position: fixed;
-  inset: 0;
-  z-index: 20;
-  display: grid;
-  place-items: center;
+  position: fixed; inset: 0; z-index: 20;
+  display: grid; place-items: center;
   background: rgba(0,0,0,.75);
 }
-
 .modal-card {
-  width: min(96vw, 760px);
-  max-height: 90vh;
-  overflow: auto;
-  background: #000;
-  color: #fff;
-  border: 1px solid #222;
-  border-radius: 16px;
+  width: min(96vw, 760px); max-height: 90vh; overflow: auto;
+  background: #000; color: #fff; border: 1px solid #222; border-radius: 16px;
   padding: 16px;
 }
-
-.modal-head {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 8px;
-}
-.icon-btn {
-  background: #111; color: #fff; border: none; border-radius: 10px; padding: 6px 10px;
-}
+.modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.icon-btn { background:#111; color:#fff; border:none; border-radius:10px; padding:6px 10px; }
 .icon-btn:active { transform: translateY(1px); }
 @media (hover:hover){ .icon-btn:hover { background:#222; cursor:pointer; } }
 
-.grid {
-  display: grid;
-  gap: 12px;
-}
+.grid { display: grid; gap: 12px; }
+.field label { display:block; font-weight:600; margin-bottom:6px; }
+.field small { opacity:.8; }
 
-.field label { display:block; font-weight: 600; margin-bottom: 6px; }
-.field small { opacity: .8; }
-
-.row { display: flex; gap: 8px; align-items: center; }
-.row input[type=number] { width: 90px; }
-
-.modal-actions {
-  display: flex; gap: 8px; margin-top: 4px; margin-bottom: 12px;
-}
-.btn-ghost {
-  padding: 10px 14px; border: 1px solid #222; border-radius: 12px; background: transparent; color:#fff;
-}
+.modal-actions { display:flex; gap:8px; margin:4px 0 12px; }
+.btn-ghost { padding:10px 14px; border:1px solid #222; border-radius:12px; background:transparent; color:#fff; }
 .btn-ghost:active { transform: translateY(1px); }
 @media (hover:hover){ .btn-ghost:hover { background:#111; cursor:pointer; } }
 
-/* Podgląd ramki roboczej */
+/* Podgląd workarea */
 .preview { margin-top: 12px; }
 .preview-stage {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 19 / 9; /* tylko pole podglądu */
-  background: #0a0a0a;
-  border: 1px dashed #222;
-  border-radius: 12px;
-  display: grid;
-  place-items: center;
+  position: relative; width: 100%; aspect-ratio: 19 / 9;
+  background:#0a0a0a; border:1px dashed #222; border-radius:12px;
+  display: grid; place-items: center;
 }
 .preview-frame {
-  border: 2px solid #fff;
-  border-radius: 8px;
-  width: 60%;
-  height: 60%;
+  border: 2px solid #fff; border-radius: 8px;
+  width: 60%; height: 60%;
   pointer-events: none;
   transition: width .2s ease, height .2s ease;
-}
-
-/* Przycisk Ustawienia w HUD */
-.hud #settingsBtn {
-  font-size: 16px;
-  padding: 8px 12px;
 }
