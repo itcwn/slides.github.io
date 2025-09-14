@@ -4,121 +4,65 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Pokaz slajdów</title>
-  <link rel="stylesheet" href="style.css?v=20250914163929" />
-  <meta name="theme-color" content="#000000" />
+  <link rel="stylesheet" href="style.css?v=20250914171720" />
 </head>
 <body>
-  <!-- Panel startowy (pełny ekran + dwa logotypy) -->
   <div id="fsPrompt" class="prompt">
     <div class="prompt-card">
       <h1>Pokaz slajdów</h1>
-      <p>Aby oglądać w trybie pełnoekranowym i zapobiec wygaszaniu ekranu, kliknij przycisk.</p>
-      <div class="prompt-actions">
-        <button id="startBtn" class="btn-primary">Uruchom pełny ekran</button>
-        <button id="browseBtn" class="btn-ghost">Pokaż wszystkie pokazy</button>
-      </div>
-      <!-- Logo klienta w białej ramce -->
+      <button id="startBtn">Uruchom pełny ekran</button>
+      <button id="browseBtn">Pokaż wszystkie pokazy</button>
       <div class="logo-frame">
-        <img src="assets/logo.png?v=20250914163929" alt="Logo" class="brand-logo" />
+        <img src="assets/logo.png?v=20250914171720" alt="Logo" />
       </div>
-      <!-- Miejsce na logo fotografa -->
       <div class="logo-frame secondary">
-        <img src="assets/photographer.png?v=20250914163929" alt="Logo fotografa" class="brand-logo" />
+        <img src="assets/photographer.png?v=20250914171720" alt="Logo fotografa" />
       </div>
-      <p class="hint">Parametry linku: <code>?client=124&amp;show=7</code> → foldery <code>000124/000007</code></p>
     </div>
   </div>
 
-  <!-- Scena z workarea (ramką roboczą) -->
-  <main id="stage" class="stage" role="main" aria-label="Pokaz slajdów">
+  <main id="stage" class="stage">
     <div id="workarea" class="workarea">
       <img id="slide" class="slide" alt="Slajd" />
     </div>
-
-    <!-- HUD (pojawia się po dotknięciu) -->
-    <div class="hud">
-      <div class="left">
-        <button id="prevBtn" aria-label="Poprzedni slajd">⟨</button>
-        <button id="playPauseBtn" aria-label="Pauza/Odtwarzaj">⏸</button>
-        <button id="nextBtn" aria-label="Następny slajd">⟩</button>
-        <button id="settingsBtn" aria-label="Ustawienia">⚙️ Ustawienia</button>
-      </div>
-      <div class="right">
-        <button id="audioBtn" aria-label="Muzyka w tle">🎵</button>
-        <span id="counter">– / –</span>
-      </div>
-    </div>
   </main>
 
-  <!-- Ustawienia: margines + czas przełączania + sortowanie -->
-  <div id="settingsModal" class="modal hidden" aria-hidden="true" role="dialog" aria-label="Ustawienia wyświetlania">
-    <div class="modal-card">
-      <div class="modal-head">
-        <h2>Ustawienia</h2>
-        <button id="closeSettingsBtn" class="icon-btn" aria-label="Zamknij">✕</button>
-      </div>
-
-      <div class="grid">
-        <div class="field">
-          <label>Margines wokół roboczego ekranu</label>
-          <input id="marginPct" type="range" min="0" max="20" step="1" value="5">
-          <div class="hint"><span id="marginVal">5%</span></div>
-          <small>Czarne obramowanie dookoła „workarea”.</small>
-        </div>
-
-        <div class="field">
-          <label>Czas przełączania slajdów (s)</label>
-          <input id="intervalSec" type="number" min="1" max="60" step="1" value="5" />
-          <small>Zmiana obowiązuje od razu po zapisaniu.</small>
-        </div>
-
-        <div class="field">
-          <label>Sortuj wg</label>
-          <div class="row">
-            <select id="sortBy">
-              <option value="name">Nazwy pliku</option>
-              <option value="modified">Daty modyfikacji</option>
-              <option value="random">Losowo</option>
-            </select>
-            <select id="sortDir">
-              <option value="asc">Rosnąco</option>
-              <option value="desc">Malejąco</option>
-            </select>
-          </div>
-          <small>Uwaga: sortowanie po dacie używa nagłówka <code>Last-Modified</code> serwera.</small>
-        </div>
-      </div>
-
-      <div class="modal-actions">
-        <button id="saveSettingsBtn" class="btn-primary">Zapisz</button>
-        <button id="resetSettingsBtn" class="btn-ghost">Domyślne</button>
-      </div>
-
-      <div class="preview">
-        <div class="preview-stage small">
-          <div id="previewFrame" class="preview-frame"></div>
-        </div>
-        <small>Podgląd: biała ramka pokazuje „workarea”.</small>
-      </div>
-    </div>
+  <div id="hud" class="hud">
+    <button id="prevBtn">⏮️</button>
+    <button id="playBtn">▶️</button>
+    <button id="pauseBtn">⏸️</button>
+    <button id="nextBtn">⏭️</button>
+    <button id="settingsBtn">⚙️</button>
+    <button id="audioBtn">🎵</button>
+    <button id="catalogBtn">📂</button>
+    <span id="counter">– / –</span>
   </div>
 
-  <!-- Katalog pokazów -->
-  <div id="catalogModal" class="modal hidden" aria-hidden="true" role="dialog" aria-label="Wybierz pokaz">
-    <div class="modal-card">
-      <div class="modal-head">
-        <h2>Wszystkie pokazy</h2>
-        <button id="closeCatalogBtn" class="icon-btn" aria-label="Zamknij">✕</button>
-      </div>
-      <div id="catalogContent" class="catalog"></div>
-      <div class="hint">Źródło: <code>albums/index.json</code>. Format przykładowy w ZIP-ie.</div>
-    </div>
+  <div id="settingsModal" class="modal hidden">
+    <button id="closeSettingsBtn">Zamknij</button>
+    <input id="marginPct" type="range" min="0" max="20" value="5">
+    <span id="marginVal">5%</span>
+    <input id="intervalSec" type="number" value="5">
+    <select id="sortBy">
+      <option value="name">Nazwa</option>
+      <option value="modified">Data</option>
+      <option value="random">Losowo</option>
+    </select>
+    <select id="sortDir">
+      <option value="asc">Rosnąco</option>
+      <option value="desc">Malejąco</option>
+    </select>
+    <button id="saveSettingsBtn">Zapisz</button>
+    <button id="resetSettingsBtn">Domyślne</button>
+    <div id="previewFrame"></div>
   </div>
 
-  <!-- Audio (znajdowane automatycznie w folderze pokazu) -->
+  <div id="catalogModal" class="modal hidden">
+    <button id="closeCatalogBtn">Zamknij</button>
+    <div id="catalogContent"></div>
+  </div>
+
   <audio id="bgAudio" loop></audio>
-
-  <noscript>Włącz JavaScript, aby wyświetlić pokaz slajdów.</noscript>
-  <script src="app.js?v=20250914163929"></script>
+  <script src="app.js?v=20250914171720"></script>
 </body>
 </html>
