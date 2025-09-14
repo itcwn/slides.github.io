@@ -3,74 +3,75 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Pokaz slajdów v2</title>
-  <link rel="stylesheet" href="style.css?v=20250914173449" />
+  <title>Pokaz slajdów</title>
+  <!-- Podbijaj numer po każdej zmianie, by ominąć cache -->
+  <link rel="stylesheet" href="style.css?v=20250913-2" />
+  <meta name="theme-color" content="#000000" />
 </head>
 <body>
-  <!-- Splash / Fullscreen Prompt -->
+  <!-- Panel startowy (pełny ekran + logo zawsze widoczne pod przyciskiem) -->
   <div id="fsPrompt" class="prompt">
     <div class="prompt-card">
       <h1>Pokaz slajdów</h1>
-      <button id="startBtn">Uruchom pełny ekran</button>
-      <button id="browseBtn">Pokaż wszystkie pokazy</button>
-      <div class="logo-frame">
-        <img src="assets/logo.png?v=20250914173449" alt="Logo klienta" />
-      </div>
-      <div class="logo-frame secondary">
-        <img src="assets/photographer.png?v=20250914173449" alt="Logo fotografa" />
-      </div>
+      <p>Aby oglądać w trybie pełnoekranowym i zapobiec wygaszaniu ekranu, kliknij przycisk.</p>
+      <button id="startBtn" class="btn-primary">Uruchom pełny ekran</button>
+      <img src="assets/logo.png?v=20250913-1" alt="Logo" class="brand-logo" />
+      <p class="hint">Jeśli przeglądarka zapyta o zgodę — potwierdź.</p>
     </div>
   </div>
 
-  <!-- Stage -->
-  <main id="stage" class="stage">
+  <!-- Scena z workarea (ramką roboczą) -->
+  <main id="stage" class="stage" role="main" aria-label="Pokaz slajdów">
     <div id="workarea" class="workarea">
       <img id="slide" class="slide" alt="Slajd" />
     </div>
+
+    <!-- HUD (pojawia się po dotknięciu) -->
+    <div class="hud">
+      <div class="left">
+        <button id="prevBtn" aria-label="Poprzedni slajd">⟨</button>
+        <button id="playPauseBtn" aria-label="Pauza/Odtwarzaj">⏸</button>
+        <button id="nextBtn" aria-label="Następny slajd">⟩</button>
+        <button id="settingsBtn" aria-label="Ustawienia">⚙️ Ustawienia</button>
+      </div>
+      <div class="right">
+        <span id="counter">– / –</span>
+      </div>
+    </div>
   </main>
 
-  <!-- HUD -->
-  <div id="hud" class="hud hidden">
-    <button id="prevBtn" title="Poprzedni">⏮️</button>
-    <button id="playBtn" title="Start">▶️</button>
-    <button id="pauseBtn" title="Pauza">⏸️</button>
-    <button id="nextBtn" title="Następny">⏭️</button>
-    <button id="settingsBtn" title="Ustawienia">⚙️</button>
-    <button id="audioBtn" title="Muzyka">🎵</button>
-    <button id="catalogBtn" title="Katalog">📂</button>
-    <span id="counter">– / –</span>
+  <!-- Ustawienia: TYLKO margines (domyślnie 5%) -->
+  <div id="settingsModal" class="modal hidden" aria-hidden="true" role="dialog" aria-label="Ustawienia wyświetlania">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h2>Ustawienia</h2>
+        <button id="closeSettingsBtn" class="icon-btn" aria-label="Zamknij">✕</button>
+      </div>
+
+      <div class="grid">
+        <div class="field">
+          <label>Margines wokół roboczego ekranu</label>
+          <input id="marginPct" type="range" min="0" max="20" step="1" value="5">
+          <div class="hint"><span id="marginVal">5%</span></div>
+          <small>Czarne obramowanie dookoła „workarea”.</small>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button id="saveSettingsBtn" class="btn-primary">Zapisz</button>
+        <button id="resetSettingsBtn" class="btn-ghost">Domyślne</button>
+      </div>
+
+      <div class="preview">
+        <div class="preview-stage">
+          <div id="previewFrame" class="preview-frame"></div>
+        </div>
+        <small>Podgląd: biała ramka pokazuje „workarea”.</small>
+      </div>
+    </div>
   </div>
 
-  <!-- Settings Modal -->
-  <div id="settingsModal" class="modal hidden">
-    <button id="closeSettingsBtn">Zamknij</button>
-    <label>Margines: <input id="marginPct" type="range" min="0" max="20" value="5"><span id="marginVal">5%</span></label><br>
-    <label>Interwał (s): <input id="intervalSec" type="number" value="5"></label><br>
-    <label>Sortuj wg: 
-      <select id="sortBy">
-        <option value="name">Nazwa</option>
-        <option value="modified">Data</option>
-        <option value="random">Losowo</option>
-      </select>
-    </label>
-    <label>Kierunek:
-      <select id="sortDir">
-        <option value="asc">Rosnąco</option>
-        <option value="desc">Malejąco</option>
-      </select>
-    </label>
-    <div id="previewFrame">Podgląd</div>
-    <button id="saveSettingsBtn">Zapisz</button>
-    <button id="resetSettingsBtn">Domyślne</button>
-  </div>
-
-  <!-- Catalog Modal -->
-  <div id="catalogModal" class="modal hidden">
-    <button id="closeCatalogBtn">Zamknij</button>
-    <div id="catalogContent"></div>
-  </div>
-
-  <audio id="bgAudio" loop></audio>
-  <script src="app.js?v=20250914173449"></script>
+  <!-- Podbijaj ?v= po każdej zmianie JS -->
+  <script src="app.js?v=20250913-2"></script>
 </body>
 </html>
