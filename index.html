@@ -4,19 +4,28 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Pokaz slajdów</title>
-  <!-- Podbijaj numer po każdej zmianie, by ominąć cache -->
-  <link rel="stylesheet" href="style.css?v=20250913-2" />
+  <link rel="stylesheet" href="style.css?v=20250914163929" />
   <meta name="theme-color" content="#000000" />
 </head>
 <body>
-  <!-- Panel startowy (pełny ekran + logo zawsze widoczne pod przyciskiem) -->
+  <!-- Panel startowy (pełny ekran + dwa logotypy) -->
   <div id="fsPrompt" class="prompt">
     <div class="prompt-card">
       <h1>Pokaz slajdów</h1>
       <p>Aby oglądać w trybie pełnoekranowym i zapobiec wygaszaniu ekranu, kliknij przycisk.</p>
-      <button id="startBtn" class="btn-primary">Uruchom pełny ekran</button>
-      <img src="assets/logo.png?v=20250913-1" alt="Logo" class="brand-logo" />
-      <p class="hint">Jeśli przeglądarka zapyta o zgodę — potwierdź.</p>
+      <div class="prompt-actions">
+        <button id="startBtn" class="btn-primary">Uruchom pełny ekran</button>
+        <button id="browseBtn" class="btn-ghost">Pokaż wszystkie pokazy</button>
+      </div>
+      <!-- Logo klienta w białej ramce -->
+      <div class="logo-frame">
+        <img src="assets/logo.png?v=20250914163929" alt="Logo" class="brand-logo" />
+      </div>
+      <!-- Miejsce na logo fotografa -->
+      <div class="logo-frame secondary">
+        <img src="assets/photographer.png?v=20250914163929" alt="Logo fotografa" class="brand-logo" />
+      </div>
+      <p class="hint">Parametry linku: <code>?client=124&amp;show=7</code> → foldery <code>000124/000007</code></p>
     </div>
   </div>
 
@@ -35,12 +44,13 @@
         <button id="settingsBtn" aria-label="Ustawienia">⚙️ Ustawienia</button>
       </div>
       <div class="right">
+        <button id="audioBtn" aria-label="Muzyka w tle">🎵</button>
         <span id="counter">– / –</span>
       </div>
     </div>
   </main>
 
-  <!-- Ustawienia: TYLKO margines (domyślnie 5%) -->
+  <!-- Ustawienia: margines + czas przełączania + sortowanie -->
   <div id="settingsModal" class="modal hidden" aria-hidden="true" role="dialog" aria-label="Ustawienia wyświetlania">
     <div class="modal-card">
       <div class="modal-head">
@@ -55,6 +65,28 @@
           <div class="hint"><span id="marginVal">5%</span></div>
           <small>Czarne obramowanie dookoła „workarea”.</small>
         </div>
+
+        <div class="field">
+          <label>Czas przełączania slajdów (s)</label>
+          <input id="intervalSec" type="number" min="1" max="60" step="1" value="5" />
+          <small>Zmiana obowiązuje od razu po zapisaniu.</small>
+        </div>
+
+        <div class="field">
+          <label>Sortuj wg</label>
+          <div class="row">
+            <select id="sortBy">
+              <option value="name">Nazwy pliku</option>
+              <option value="modified">Daty modyfikacji</option>
+              <option value="random">Losowo</option>
+            </select>
+            <select id="sortDir">
+              <option value="asc">Rosnąco</option>
+              <option value="desc">Malejąco</option>
+            </select>
+          </div>
+          <small>Uwaga: sortowanie po dacie używa nagłówka <code>Last-Modified</code> serwera.</small>
+        </div>
       </div>
 
       <div class="modal-actions">
@@ -63,7 +95,7 @@
       </div>
 
       <div class="preview">
-        <div class="preview-stage">
+        <div class="preview-stage small">
           <div id="previewFrame" class="preview-frame"></div>
         </div>
         <small>Podgląd: biała ramka pokazuje „workarea”.</small>
@@ -71,7 +103,22 @@
     </div>
   </div>
 
-  <!-- Podbijaj ?v= po każdej zmianie JS -->
-  <script src="app.js?v=20250913-2"></script>
+  <!-- Katalog pokazów -->
+  <div id="catalogModal" class="modal hidden" aria-hidden="true" role="dialog" aria-label="Wybierz pokaz">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h2>Wszystkie pokazy</h2>
+        <button id="closeCatalogBtn" class="icon-btn" aria-label="Zamknij">✕</button>
+      </div>
+      <div id="catalogContent" class="catalog"></div>
+      <div class="hint">Źródło: <code>albums/index.json</code>. Format przykładowy w ZIP-ie.</div>
+    </div>
+  </div>
+
+  <!-- Audio (znajdowane automatycznie w folderze pokazu) -->
+  <audio id="bgAudio" loop></audio>
+
+  <noscript>Włącz JavaScript, aby wyświetlić pokaz slajdów.</noscript>
+  <script src="app.js?v=20250914163929"></script>
 </body>
 </html>
