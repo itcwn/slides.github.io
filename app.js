@@ -1,6 +1,5 @@
 document.addEventListener('DOMContentLoaded',()=>{
   const slideEl=document.getElementById('slide');
-  const hud=document.getElementById('hud');
   const counter=document.getElementById('counter');
   const prevBtn=document.getElementById('prevBtn');
   const nextBtn=document.getElementById('nextBtn');
@@ -19,7 +18,6 @@ document.addEventListener('DOMContentLoaded',()=>{
   const sortDir=document.getElementById('sortDir');
   const saveSettingsBtn=document.getElementById('saveSettingsBtn');
   const resetSettingsBtn=document.getElementById('resetSettingsBtn');
-  const previewFrame=document.getElementById('previewFrame');
   const catalogBtn=document.getElementById('catalogBtn');
   const catalogModal=document.getElementById('catalogModal');
   const closeCatalogBtn=document.getElementById('closeCatalogBtn');
@@ -32,7 +30,8 @@ document.addEventListener('DOMContentLoaded',()=>{
 
   function show(i){index=(i+slides.length)%slides.length;slideEl.src=slides[index];counter.textContent=`${index+1}/${slides.length}`;}
   function next(){show(index+1);} function prev(){show(index-1);}
-  function play(){timer=setInterval(next,5000);} function pause(){clearInterval(timer);}
+  function play(){timer=setInterval(next,parseInt(intervalSec.value,10)*1000);} 
+  function pause(){clearInterval(timer);}
 
   prevBtn.addEventListener('click',prev);
   nextBtn.addEventListener('click',next);
