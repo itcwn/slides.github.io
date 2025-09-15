@@ -1,6 +1,6 @@
 
 (() => {
-  const VERSION = "1757925452";
+  const VERSION = "1757926622";
   const qs = new URLSearchParams(location.search);
   const clientParam = qs.get('client') || '';
   const showParam = qs.get('show') || '';
@@ -34,6 +34,10 @@
     btnPlayPause: document.getElementById('btnPlayPause'),
     btnSettings: document.getElementById('btnSettings'),
     btnCatalog: document.getElementById('btnCatalog'),
+    btnHome: document.getElementById('btnHome'),
+    btnMarginMinus: document.getElementById('btnMarginMinus'),
+    btnMarginPlus: document.getElementById('btnMarginPlus'),
+    stage: document.getElementById('stage'),
     btnHome: document.getElementById('btnHome'),
     stage: document.getElementById('stage'),
     btnAudio: document.getElementById('btnAudio'),
@@ -215,7 +219,15 @@
     el.btnPlayPause.addEventListener('click', () => { togglePlay(); showHUD(); });
     el.btnSettings.addEventListener('click', () => el.modalSettings.showModal());
     el.btnCatalog.addEventListener('click', () => openCatalog());
-    el.btnHome.addEventListener('click', async () => { try { if (document.fullscreenElement) await document.exitFullscreen(); } catch(e){} showHUD(); });
+    el.btnHome.addEventListener('click', async () => {
+      try { if (document.fullscreenElement) await document.exitFullscreen(); } catch(e){}
+      pause(); stopAudio();
+      el.splash.style.display = 'grid';
+      // hide HUD while on splash
+      el.hud.classList.add('hud-hidden'); el.hud.classList.remove('hud-visible');
+    });
+    el.btnMarginMinus.addEventListener('click', () => { adjustMargin(-1); });
+    el.btnMarginPlus.addEventListener('click', () => { adjustMargin(+1); });
     el.btnOpenCatalog.addEventListener('click', () => openCatalog());
 
     // Audio
