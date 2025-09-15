@@ -1,6 +1,16 @@
 {
   "clients": [
-    { "id": "000124", "name": "Anna", "shows": ["000001","000007"] },
-    { "id": "000200", "name": "Marek", "shows": ["000003"] }
+    {
+      "guid": "sample-client",
+      "name": "Klient przykładowy",
+      "shows": [
+        {
+          "id": "sample-show",
+          "name": "Pokaz przykładowy",
+          "path": "albums/sample-client/sample-show/",
+          "thumb": "01.png"
+        }
+      ]
+    }
   ]
 }

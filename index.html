@@ -1,77 +1,99 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pl">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Pokaz slajdów</title>
-  <!-- Podbijaj numer po każdej zmianie, by ominąć cache -->
-  <link rel="stylesheet" href="style.css?v=20250913-2" />
-  <meta name="theme-color" content="#000000" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pokaz slajdów – Minimal</title>
+  <link id="main-css" rel="stylesheet" href="styles.css?v=1757921330">
 </head>
 <body>
-  <!-- Panel startowy (pełny ekran + logo zawsze widoczne pod przyciskiem) -->
-  <div id="fsPrompt" class="prompt">
-    <div class="prompt-card">
-      <h1>Pokaz slajdów</h1>
-      <p>Aby oglądać w trybie pełnoekranowym i zapobiec wygaszaniu ekranu, kliknij przycisk.</p>
-      <button id="startBtn" class="btn-primary">Uruchom pełny ekran</button>
-      <img src="assets/logo.png?v=20250913-1" alt="Logo" class="brand-logo" />
-      <p class="hint">Jeśli przeglądarka zapyta o zgodę — potwierdź.</p>
-    </div>
-  </div>
-
-  <!-- Scena z workarea (ramką roboczą) -->
-  <main id="stage" class="stage" role="main" aria-label="Pokaz slajdów">
-    <div id="workarea" class="workarea">
-      <img id="slide" class="slide" alt="Slajd" />
-    </div>
-
-    <!-- HUD (pojawia się po dotknięciu) -->
-    <div class="hud">
-      <div class="left">
-        <button id="prevBtn" aria-label="Poprzedni slajd">⟨</button>
-        <button id="playPauseBtn" aria-label="Pauza/Odtwarzaj">⏸</button>
-        <button id="nextBtn" aria-label="Następny slajd">⟩</button>
-        <button id="settingsBtn" aria-label="Ustawienia">⚙️ Ustawienia</button>
+  <!-- Splash / start screen -->
+  <section id="splash" aria-labelledby="splashTitle" role="dialog">
+    <div class="splash-card">
+      <h1 id="splashTitle">Pokaz slajdów</h1>
+      <div class="logos">
+        <div class="logo-box"><img id="logoClient" alt="Logo klienta" src="assets/logos/client.png?v=1757921330"></div>
+        <div class="logo-box"><img id="logoPhotographer" alt="Logo fotografa" src="assets/logos/photographer.png?v=1757921330"></div>
       </div>
-      <div class="right">
-        <span id="counter">– / –</span>
+      <p>Ten pokaz wymaga pełnego ekranu i interakcji użytkownika, aby odtworzyć audio i zapobiec wygaszaniu ekranu.</p>
+      <div class="splash-actions">
+        <button id="btnStart">Uruchom pełny ekran</button>
+        <button id="btnOpenCatalog" class="secondary">Pokaż wszystkie pokazy</button>
       </div>
+    </div>
+  </section>
+
+  <!-- Stage / workarea -->
+  <main id="stage" aria-live="polite">
+    <div id="workarea">
+      <img id="slideImg" alt="Slajd" />
     </div>
   </main>
 
-  <!-- Ustawienia: TYLKO margines (domyślnie 5%) -->
-  <div id="settingsModal" class="modal hidden" aria-hidden="true" role="dialog" aria-label="Ustawienia wyświetlania">
-    <div class="modal-card">
-      <div class="modal-head">
-        <h2>Ustawienia</h2>
-        <button id="closeSettingsBtn" class="icon-btn" aria-label="Zamknij">✕</button>
+  <!-- HUD -->
+  <div id="hud" class="hud-hidden" aria-hidden="true">
+    <div id="hudTop">
+      <div class="hud-group">
+        <button class="hud-btn" id="btnPrev" aria-label="Poprzedni">⏮️</button>
+        <button class="hud-btn" id="btnPlayPause" aria-label="Odtwórz/Pauza">▶️</button>
+        <button class="hud-btn" id="btnNext" aria-label="Następny">⏭️</button>
       </div>
-
-      <div class="grid">
-        <div class="field">
-          <label>Margines wokół roboczego ekranu</label>
-          <input id="marginPct" type="range" min="0" max="20" step="1" value="5">
-          <div class="hint"><span id="marginVal">5%</span></div>
-          <small>Czarne obramowanie dookoła „workarea”.</small>
-        </div>
-      </div>
-
-      <div class="modal-actions">
-        <button id="saveSettingsBtn" class="btn-primary">Zapisz</button>
-        <button id="resetSettingsBtn" class="btn-ghost">Domyślne</button>
-      </div>
-
-      <div class="preview">
-        <div class="preview-stage">
-          <div id="previewFrame" class="preview-frame"></div>
-        </div>
-        <small>Podgląd: biała ramka pokazuje „workarea”.</small>
+      <div class="counter" id="counter">0 / 0</div>
+      <div class="hud-group">
+        <button class="hud-btn" id="btnAudio" aria-label="Audio" hidden>🎵</button>
+        <button class="hud-btn" id="btnSettings" aria-label="Ustawienia">⚙️</button>
+        <button class="hud-btn" id="btnCatalog" aria-label="Katalog pokazów">📂</button>
       </div>
     </div>
+    <div id="hudBottom"></div>
   </div>
 
-  <!-- Podbijaj ?v= po każdej zmianie JS -->
-  <script src="app.js?v=20250913-2"></script>
+  <!-- Modal: Settings -->
+  <dialog id="modalSettings">
+    <form method="dialog" class="modal">
+      <h2>Ustawienia</h2>
+      <label>Margines (%)
+        <input type="range" id="optMargin" min="0" max="20" step="1" value="5">
+        <output id="optMarginOut">5%</output>
+      </label>
+      <label>Interwał (sekundy)
+        <input type="number" id="optInterval" min="1" max="120" step="1" value="5">
+      </label>
+      <label>Sortowanie
+        <select id="optSortBy">
+          <option value="name">po nazwie</option>
+          <option value="dateModified">po dacie modyfikacji</option>
+          <option value="random">losowo</option>
+        </select>
+      </label>
+      <label>Kierunek
+        <select id="optDirection">
+          <option value="asc">rosnąco</option>
+          <option value="desc">malejąco</option>
+        </select>
+      </label>
+      <div class="previewFrame">
+        <div class="frameBox"><div class="frameInner"></div></div>
+        <small>Podgląd ramki (marginesu)</small>
+      </div>
+      <menu>
+        <button value="cancel" class="secondary">Zamknij</button>
+        <button id="btnSaveSettings">Zapisz</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <!-- Modal: Catalog -->
+  <dialog id="modalCatalog">
+    <form method="dialog" class="modal">
+      <h2>Katalog pokazów</h2>
+      <div id="catalogList" class="catalog"></div>
+      <menu>
+        <button value="cancel" class="secondary">Zamknij</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <script src="app.js?v=1757921330"></script>
 </body>
 </html>

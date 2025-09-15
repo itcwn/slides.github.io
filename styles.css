@@ -1,0 +1,71 @@
+
+:root {
+  --margin: 5; /* % */
+  --hud-fade: 300ms;
+  --bg: #000;
+  --fg: #fff;
+}
+html, body { height: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial, sans-serif;
+  overflow: hidden;
+}
+/* Splash */
+#splash {
+  position: fixed; inset: 0; display: grid; place-items: center; gap: 24px; background: #000; z-index: 40;
+  padding: 24px; text-align: center;
+}
+.splash-card { max-width: 720px; width: 100%; }
+.logos { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-bottom: 16px; }
+.logo-box {
+  background: #111; border: 2px solid #fff; border-radius: 16px; padding: 12px; width: 160px; height: 160px; display: grid; place-items: center;
+}
+.logo-box img { max-width: 100%; max-height: 100%; object-fit: contain; }
+
+.splash-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+button, .btn {
+  background: #fff; color: #000; border: none; border-radius: 999px; padding: 10px 16px; font-weight: 600; cursor: pointer;
+}
+button.secondary { background: #222; color: #fff; border: 1px solid #444; }
+button:disabled { opacity: .5; cursor: not-allowed; }
+
+/* Stage */
+#stage { position: fixed; inset: 0; display: grid; place-items: center; z-index: 1; }
+#workarea { position: relative; width: calc(100vw - var(--margin)*1vw*2); height: calc(100vh - var(--margin)*1vh*2); }
+#slideImg {
+  position: absolute; inset: 0; margin: auto; max-width: 100%; max-height: 100%; object-fit: contain; image-rendering: auto;
+  box-shadow: 0 0 0 0 rgba(0,0,0,0);
+}
+
+/* HUD */
+#hud { position: fixed; inset: 0; z-index: 20; pointer-events: none; }
+#hudTop, #hudBottom { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; gap: 10px; }
+#hudTop { position: absolute; top: 0; width: 100%; }
+#hudBottom { position: absolute; bottom: 0; width: 100%; }
+.hud-group { display: flex; gap: 8px; }
+.hud-btn { pointer-events: auto; background: rgba(255,255,255,.9); color: #000; border-radius: 10px; border: none; padding: 10px 12px; font-size: 18px; }
+.hud-btn[hidden] { display: none; }
+.counter { background: rgba(0,0,0,.6); color: #fff; padding: 6px 10px; border-radius: 999px; font-variant-numeric: tabular-nums; }
+.hud-hidden { opacity: 0; transition: opacity var(--hud-fade); }
+.hud-visible { opacity: 1; transition: opacity var(--hud-fade); }
+
+/* Modals */
+dialog { border: none; border-radius: 16px; padding: 0; background: #111; color: #fff; width: min(720px, 92vw); }
+dialog::backdrop { background: rgba(0,0,0,.6); }
+.modal { padding: 16px; display: grid; gap: 12px; }
+.modal h2 { margin: 0 0 8px 0; }
+.modal label { display: grid; gap: 6px; text-align: left; }
+.modal input, .modal select { padding: 8px 10px; border-radius: 8px; border: 1px solid #444; background: #000; color: #fff; }
+.modal menu { display: flex; justify-content: flex-end; gap: 8px; padding: 0; }
+.previewFrame { display: grid; gap: 6px; justify-items: center; }
+.frameBox { width: 240px; height: 140px; background: #000; border: 1px solid #333; position: relative; }
+.frameInner { position: absolute; inset: 0; background: #111; margin: 5%; }
+
+/* Catalog */
+.catalog { display: grid; gap: 10px; text-align: left; }
+.catalog .client { border: 1px solid #333; border-radius: 10px; padding: 10px; }
+.catalog .client h3 { margin: 0 0 8px 0; }
+.catalog .shows { display: grid; gap: 6px; }
+.catalog a { color: #fff; text-decoration: none; }
+.catalog a .tag { opacity: .7; font-size: 12px; margin-left: 8px; }

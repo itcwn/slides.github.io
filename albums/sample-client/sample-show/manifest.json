@@ -1,0 +1,19 @@
+{
+  "slides": [
+    {
+      "file": "01.png",
+      "title": "Pierwszy",
+      "dateModified": "2025-02-12T10:15:00Z"
+    },
+    {
+      "file": "02.png",
+      "title": "Drugi",
+      "dateModified": "2025-02-12T10:17:00Z"
+    },
+    {
+      "file": "03.png",
+      "title": "Trzeci",
+      "dateModified": "2025-02-12T10:20:00Z"
+    }
+  ]
+}

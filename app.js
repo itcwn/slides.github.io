@@ -1,238 +1,379 @@
-"use strict";
 
-// ===== Konfiguracja =====
-const DEFAULTS = { intervalMs: 4000, autoPlay: true };
-const BUILD_TOKEN = "20250913-2"; // podbij po każdej zmianie
-
-// Cache-busting helper
-function bust(url){ const sep = url.includes('?') ? '&' : '?'; return url + sep + 'v=' + BUILD_TOKEN; }
-
-// Bezpieczny getter elementów
-function $(id){ return document.getElementById(id); }
-function on(el, evt, fn, opts){ if(el) el.addEventListener(evt, fn, opts); else console.warn(`[UI] Brak elementu #${(el && el.id) || '??'} dla zdarzenia ${evt}`); }
-
-// Odpal po pełnym załadowaniu DOM, żeby mieć pewność, że wszystkie elementy już są
-document.addEventListener('DOMContentLoaded', () => {
-  // ----- Pobranie elementów (mogą nie istnieć – obsługujemy to) -----
+(() => {
+  const VERSION = "1757921330";
   const qs = new URLSearchParams(location.search);
-  const album = qs.get('album') || 'event1';
+  const clientParam = qs.get('client') || '';
+  const showParam = qs.get('show') || '';
+  const state = {
+    slides: [],
+    current: 0,
+    playing: false,
+    timer: null,
+    intervalSec: 5,
+    marginPct: 5,
+    sortBy: 'name',
+    direction: 'asc',
+    hudTimer: null,
+    wakeLock: null,
+    audioEl: null,
+    audioAvailable: false,
+    key: () => `slideshow::${clientParam}::${showParam}`
+  };
 
-  const imgEl = $('slide');
-  const counterEl = $('counter');
-  const playPauseBtn = $('playPauseBtn');
-  const prevBtn = $('prevBtn');
-  const nextBtn = $('nextBtn');
-  const hudEl = document.querySelector('.hud');
-  const fsPromptEl = $('fsPrompt');
-  const startBtn = $('startBtn');
+  // Elements
+  const el = {
+    splash: document.getElementById('splash'),
+    btnStart: document.getElementById('btnStart'),
+    btnOpenCatalog: document.getElementById('btnOpenCatalog'),
+    stage: document.getElementById('stage'),
+    work: document.getElementById('workarea'),
+    img: document.getElementById('slideImg'),
+    hud: document.getElementById('hud'),
+    btnPrev: document.getElementById('btnPrev'),
+    btnNext: document.getElementById('btnNext'),
+    btnPlayPause: document.getElementById('btnPlayPause'),
+    btnSettings: document.getElementById('btnSettings'),
+    btnCatalog: document.getElementById('btnCatalog'),
+    btnAudio: document.getElementById('btnAudio'),
+    counter: document.getElementById('counter'),
+    modalSettings: document.getElementById('modalSettings'),
+    optMargin: document.getElementById('optMargin'),
+    optMarginOut: document.getElementById('optMarginOut'),
+    optInterval: document.getElementById('optInterval'),
+    optSortBy: document.getElementById('optSortBy'),
+    optDirection: document.getElementById('optDirection'),
+    btnSaveSettings: document.getElementById('btnSaveSettings'),
+    modalCatalog: document.getElementById('modalCatalog'),
+    catalogList: document.getElementById('catalogList'),
+  };
 
-  // Ustawienia (tylko margines)
-  const workareaEl = $('workarea');
-  const settingsBtn = $('settingsBtn');
-  const settingsModal = $('settingsModal');
-  const closeSettingsBtn = $('closeSettingsBtn');
-  const saveSettingsBtn = $('saveSettingsBtn');
-  const resetSettingsBtn = $('resetSettingsBtn');
-  const marginPctEl = $('marginPct');
-  const marginValEl = $('marginVal');
-  const previewFrameEl = $('previewFrame');
+  // Apply margin variable
+  const applyMargin = () => {
+    document.documentElement.style.setProperty('--margin', state.marginPct);
+    const inner = document.querySelector('.frameInner');
+    if (inner) inner.style.margin = state.marginPct + '%';
+    el.optMarginOut.textContent = state.marginPct + '%';
+  };
 
-  // Stałe domyślne (ukryte)
-  const ASPECT_W = 16;
-  const ASPECT_H = 9;
-  const FIT_MODE = 'contain';
-  const ALIGN_H = 'center';
-  const ALIGN_V = 'center';
-
-  let manifest = null, index = 0, timer = null, isPlaying = DEFAULTS.autoPlay, wakeLock = null;
-
-  // ----- Fullscreen + WakeLock -----
-  function isFullscreen(){ return document.fullscreenElement || document.webkitFullscreenElement; }
-  async function requestFullscreen(){
-    const el = document.documentElement;
-    try { if (el.requestFullscreen) return await el.requestFullscreen();
-          if (el.webkitRequestFullscreen) return el.webkitRequestFullscreen(); } catch {}
+  function saveSettings() {
+    const data = {
+      intervalSec: state.intervalSec,
+      marginPct: state.marginPct,
+      sortBy: state.sortBy,
+      direction: state.direction
+    };
+    localStorage.setItem(state.key(), JSON.stringify(data));
   }
-  async function requestWakeLock(){
+
+  function loadSettings() {
+    const raw = localStorage.getItem(state.key());
+    if (!raw) return;
     try {
-      if ('wakeLock' in navigator) {
-        wakeLock = await navigator.wakeLock.request('screen');
-        document.addEventListener('visibilitychange', async () => {
-          if (document.visibilityState === 'visible') {
-            try { wakeLock = await navigator.wakeLock.request('screen'); } catch {}
-          }
-        });
+      const data = JSON.parse(raw);
+      if (typeof data.intervalSec === 'number') state.intervalSec = data.intervalSec;
+      if (typeof data.marginPct === 'number') state.marginPct = data.marginPct;
+      if (typeof data.sortBy === 'string') state.sortBy = data.sortBy;
+      if (typeof data.direction === 'string') state.direction = data.direction;
+    } catch { }
+  }
+
+  function sortSlides() {
+    if (state.sortBy === 'random') {
+      state.slides.sort(() => Math.random() - .5);
+      return;
+    }
+    const dir = state.direction === 'desc' ? -1 : 1;
+    state.slides.sort((a,b) => {
+      let av, bv;
+      if (state.sortBy === 'dateModified') {
+        av = a.dateModified ? Date.parse(a.dateModified) : 0;
+        bv = b.dateModified ? Date.parse(b.dateModified) : 0;
+      } else {
+        av = a.file.toLowerCase();
+        bv = b.file.toLowerCase();
       }
-    } catch {}
-  }
-
-  // ----- HUD -----
-  let hudTimer = null;
-  function showHUD(ms=3000){
-    if (!hudEl) return;
-    hudEl.classList.add('show');
-    clearTimeout(hudTimer);
-    hudTimer = setTimeout(()=>hudEl.classList.remove('show'), ms);
-  }
-
-  // ----- Manifest / Slajdy -----
-  async function loadManifest(name){
-    const res = await fetch(bust(`albums/${encodeURIComponent(name)}/manifest.json`), { cache:'no-store' });
-    if (!res.ok) throw new Error('Nie można wczytać manifestu: '+name);
-    const data = await res.json();
-    if (!Array.isArray(data.images)) throw new Error('manifest.json musi mieć tablicę "images"');
-    return data;
-  }
-  function setCounter(i,t){ if (counterEl) counterEl.textContent = `${i+1} / ${t}`; }
-  function preload(src){ const img = new Image(); img.src = bust(src); }
-  function show(i){
-    if (!manifest || !imgEl) return;
-    index = (i + manifest.images.length) % manifest.images.length;
-    const src = `albums/${album}/${manifest.images[index]}`;
-    imgEl.src = bust(src);
-    setCounter(index, manifest.images.length);
-    const nextIdx = (index + 1) % manifest.images.length;
-    preload(`albums/${album}/${manifest.images[nextIdx]}`);
-  }
-  function play(){
-    isPlaying = true;
-    if (playPauseBtn) playPauseBtn.textContent = '⏸';
-    clearInterval(timer);
-    timer = setInterval(() => show(index + 1), manifest?.intervalMs || DEFAULTS.intervalMs);
-  }
-  function pause(){
-    isPlaying = false;
-    if (playPauseBtn) playPauseBtn.textContent = '▶';
-    clearInterval(timer);
-  }
-
-  // ----- Gesty / klawisze -----
-  (function(){
-    let x0 = null;
-    window.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; }, { passive:true });
-    window.addEventListener('touchend', e => {
-      if (x0 == null) return;
-      const dx = e.changedTouches[0].clientX - x0;
-      if (Math.abs(dx) > 40) {
-        if (dx > 0) show(index - 1); else show(index + 1);
-        pause(); showHUD();
-      }
-      x0 = null;
+      return av < bv ? -1*dir : av > bv ? 1*dir : 0;
     });
-  })();
-  window.addEventListener('keydown', e => {
-    if (e.key === 'ArrowRight') { show(index + 1); pause(); showHUD(); }
-    else if (e.key === 'ArrowLeft') { show(index - 1); pause(); showHUD(); }
-    else if (e.key.toLowerCase() === ' ') { isPlaying ? pause() : play(); showHUD(); }
-  });
+  }
 
-  on(prevBtn, 'click', () => { show(index - 1); pause(); showHUD(); });
-  on(nextBtn, 'click', () => { show(index + 1); pause(); showHUD(); });
-  on(playPauseBtn, 'click', () => { isPlaying ? pause() : play(); showHUD(); });
+  function updateCounter() {
+    el.counter.textContent = `${state.current+1} / ${state.slides.length}`;
+  }
 
-  // ----- Start (pełny ekran + Wake Lock) -----
-  async function activatePresentation(e){
-    if (e && e.preventDefault) e.preventDefault();
-    await requestFullscreen();
-    await requestWakeLock();
-    if (fsPromptEl) fsPromptEl.classList.add('hidden');
+  function cacheBust(url) {
+    const u = new URL(url, location.href);
+    u.searchParams.set('v', VERSION);
+    return u.toString();
+  }
+
+  async function setSlide(idx) {
+    if (!state.slides.length) return;
+    state.current = (idx + state.slides.length) % state.slides.length;
+    const s = state.slides[state.current];
+    el.img.src = cacheBust(s.src);
+    el.img.alt = s.title || s.file || 'Slajd';
+    updateCounter();
+    prefetchNeighbors();
+  }
+
+  function next() { setSlide(state.current + 1); }
+  function prev() { setSlide(state.current - 1); }
+
+  function play() {
+    if (state.playing) return;
+    state.playing = true;
+    el.btnPlayPause.textContent = '⏸️';
+    state.timer = setInterval(next, state.intervalSec * 1000);
+  }
+  function pause() {
+    state.playing = false;
+    el.btnPlayPause.textContent = '▶️';
+    if (state.timer) clearInterval(state.timer);
+    state.timer = null;
+  }
+  function togglePlay() { state.playing ? pause() : play(); }
+
+  function showHUD() {
+    el.hud.classList.remove('hud-hidden');
+    el.hud.classList.add('hud-visible');
+    el.hud.setAttribute('aria-hidden','false');
+    if (state.hudTimer) clearTimeout(state.hudTimer);
+    state.hudTimer = setTimeout(() => {
+      el.hud.classList.add('hud-hidden');
+      el.hud.classList.remove('hud-visible');
+      el.hud.setAttribute('aria-hidden','true');
+    }, 2500);
+  }
+
+  function bindControls() {
+    // Buttons
+    el.btnPrev.addEventListener('click', () => { prev(); showHUD(); });
+    el.btnNext.addEventListener('click', () => { next(); showHUD(); });
+    el.btnPlayPause.addEventListener('click', () => { togglePlay(); showHUD(); });
+    el.btnSettings.addEventListener('click', () => el.modalSettings.showModal());
+    el.btnCatalog.addEventListener('click', () => openCatalog());
+    el.btnOpenCatalog.addEventListener('click', () => openCatalog());
+
+    // Audio
+    el.btnAudio.addEventListener('click', () => {
+      if (!state.audioEl) return;
+      state.audioEl.muted = !state.audioEl.muted;
+      el.btnAudio.textContent = state.audioEl.muted ? '🎵' : '🎵';
+      el.btnAudio.title = state.audioEl.muted ? 'Wycisz' : 'Wycisz';
+    });
+
+    // Settings modal
+    el.optMargin.addEventListener('input', (e) => { state.marginPct = parseInt(e.target.value,10); applyMargin(); });
+    el.optInterval.addEventListener('input', (e) => { state.intervalSec = Math.max(1, parseInt(e.target.value,10)||5); if (state.playing) { pause(); play(); } });
+    el.optSortBy.addEventListener('change', (e) => { state.sortBy = e.target.value; sortSlides(); setSlide(state.current); });
+    el.optDirection.addEventListener('change', (e) => { state.direction = e.target.value; sortSlides(); setSlide(state.current); });
+    el.btnSaveSettings.addEventListener('click', (e) => { e.preventDefault(); saveSettings(); el.modalSettings.close(); });
+
+    // Keyboard
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') { next(); showHUD(); }
+      else if (e.key === 'ArrowLeft') { prev(); showHUD(); }
+      else if (e.key === ' ') { e.preventDefault(); togglePlay(); showHUD(); }
+    });
+
+    // Touch swipe
+    let startX = null, startY = null;
+    window.addEventListener('touchstart', (e) => { const t = e.changedTouches[0]; startX = t.clientX; startY = t.clientY; });
+    window.addEventListener('touchend', (e) => {
+      const t = e.changedTouches[0]; if (startX==null) return;
+      const dx = t.clientX - startX; const dy = t.clientY - startY;
+      if (Math.abs(dx) > 30 && Math.abs(dx) > Math.abs(dy)) { if (dx < 0) next(); else prev(); showHUD(); }
+      startX = startY = null;
+    });
+
+    // Show HUD on pointer activity
+    ['mousemove','pointerdown','touchstart'].forEach(ev => window.addEventListener(ev, showHUD));
+  }
+
+  async function openCatalog() {
+    await loadCatalog();
+    el.modalCatalog.showModal();
+  }
+
+  async function loadCatalog() {
+    el.catalogList.innerHTML = '<p>Ładowanie…</p>';
+    try {
+      const res = await fetch(cacheBust('albums/index.json'));
+      if (!res.ok) throw new Error('Brak index.json');
+      const data = await res.json();
+      el.catalogList.innerHTML = '';
+      data.clients.forEach(c => {
+        const wrap = document.createElement('div');
+        wrap.className = 'client';
+        const h = document.createElement('h3');
+        h.textContent = c.name || c.guid;
+        wrap.appendChild(h);
+        const list = document.createElement('div'); list.className = 'shows';
+        (c.shows||[]).forEach(s => {
+          const a = document.createElement('a');
+          a.href = `?client=${encodeURIComponent(c.guid)}&show=${encodeURIComponent(s.id)}`;
+          a.textContent = s.name || s.id;
+          const tag = document.createElement('span'); tag.className='tag'; tag.textContent = s.id;
+          a.appendChild(tag);
+          a.addEventListener('click', (e) => { e.preventDefault(); location.href = a.href; location.reload(); });
+          list.appendChild(a);
+        });
+        wrap.appendChild(list);
+        el.catalogList.appendChild(wrap);
+      });
+    } catch (e) {
+      el.catalogList.innerHTML = '<p>Nie udało się wczytać katalogu.</p>';
+    }
+  }
+
+  async function requestFullscreenAndStart() {
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+      }
+    } catch (e) {
+      console.warn('Fullscreen error', e);
+    }
+    await enableWakeLock();
+    await startAudioIfAny();
+    el.splash.style.display = 'none';
     showHUD();
   }
-  on(startBtn, 'click', activatePresentation);
-  document.addEventListener('fullscreenchange', () => { if (!isFullscreen() && fsPromptEl) fsPromptEl.classList.remove('hidden'); });
-  document.addEventListener('webkitfullscreenchange', () => { if (!isFullscreen() && fsPromptEl) fsPromptEl.classList.remove('hidden'); });
 
-  // ----- Ustawienia: tylko margines -----
-  const SETTINGS_KEY = 'slideshow_settings_v2_onlyMargin';
-  const DEFAULT_SETTINGS = { marginPct: 5 };
-  let SETTINGS = { ...DEFAULT_SETTINGS };
-
-  function loadSettings(){ try{ const raw=localStorage.getItem(SETTINGS_KEY); if(raw) SETTINGS={...DEFAULT_SETTINGS, ...JSON.parse(raw)}; }catch{} }
-  function saveSettings(){ localStorage.setItem(SETTINGS_KEY, JSON.stringify(SETTINGS)); }
-
-  function updatePreviewBase(pct){
-    if (!previewFrameEl) return;
-    const ratio = 16/9;
-    const base = Math.max(10, 60 - pct);
-    if (ratio >= 1) { previewFrameEl.style.width = base + '%'; previewFrameEl.style.height = (base/ratio) + '%'; }
-    else { previewFrameEl.style.height = base + '%'; previewFrameEl.style.width = (base*ratio) + '%'; }
-  }
-  function updatePreview(){ updatePreviewBase(SETTINGS.marginPct); }
-  function updatePreviewLive(){ const p = Number(marginPctEl?.value)||0; updatePreviewBase(p); }
-
-  function applySettingsToUI(){
-    if (marginPctEl) marginPctEl.value = SETTINGS.marginPct;
-    if (marginValEl) marginValEl.textContent = SETTINGS.marginPct + '%';
-    updatePreview();
-  }
-
-  function openSettings(){
-    applySettingsToUI();
-    if (settingsModal){
-      settingsModal.classList.remove('hidden');
-      settingsModal.setAttribute('aria-hidden','false');
-    }
-    pause(); showHUD(9999);
-  }
-  function closeSettings(){
-    if (settingsModal){
-      settingsModal.classList.add('hidden');
-      settingsModal.setAttribute('aria-hidden','true');
-    }
-  }
-
-  on(settingsBtn, 'click', openSettings);
-  on(closeSettingsBtn, 'click', closeSettings);
-  if (settingsModal) {
-    settingsModal.addEventListener('click', (e) => { if (e.target === settingsModal) closeSettings(); });
-  }
-  on(resetSettingsBtn, 'click', () => { SETTINGS = { ...DEFAULT_SETTINGS }; applySettingsToUI(); });
-  on(marginPctEl, 'input', () => {
-    if (marginValEl && marginPctEl) marginValEl.textContent = marginPctEl.value + '%';
-    updatePreviewLive();
-  });
-  on(saveSettingsBtn, 'click', () => {
-    SETTINGS.marginPct = Number(marginPctEl?.value) || 0;
-    saveSettings(); closeSettings(); applyWorkareaLayout();
-  });
-
-  // ----- Layout workarea -----
-  function applyWorkareaLayout(){
-    if (!workareaEl || !imgEl) return;
-    const vw = window.innerWidth, vh = window.innerHeight;
-    const marginK = Math.max(0, Math.min(SETTINGS.marginPct, 40)) / 100;
-    const usableW = vw * (1 - marginK * 2);
-    const usableH = vh * (1 - marginK * 2);
-    const targetRatio = ASPECT_W / ASPECT_H;
-
-    let waW, waH;
-    if (usableW / usableH >= targetRatio) { waH = usableH; waW = waH * targetRatio; }
-    else { waW = usableW; waH = waW / targetRatio; }
-
-    workareaEl.style.width = `${waW}px`;
-    workareaEl.style.height = `${waH}px`;
-
-    imgEl.style.objectFit = 'contain';
-    imgEl.style.objectPosition = 'center center';
-
-    updatePreview();
-  }
-  window.addEventListener('resize', applyWorkareaLayout);
-
-  // ----- Init -----
-  (async function init(){
+  async function enableWakeLock() {
     try {
-      loadSettings();
-      manifest = await loadManifest(album);
-      show(0);
-      if ((manifest.autoPlay ?? DEFAULTS.autoPlay)) play(); else pause();
+      if ('wakeLock' in navigator) {
+        state.wakeLock = await navigator.wakeLock.request('screen');
+        state.wakeLock.addEventListener('release', () => console.log('Wake Lock released'));
+        document.addEventListener('visibilitychange', async () => {
+          if (document.visibilityState === 'visible' && !document.fullscreenElement) return;
+          try { state.wakeLock = await navigator.wakeLock.request('screen'); } catch { }
+        });
+      }
+    } catch (e) { console.warn('WakeLock error', e); }
+  }
 
-      window.addEventListener('pointerdown', () => showHUD(), { passive: true });
+  async function startAudioIfAny() {
+    const basePath = albumPath();
+    if (!basePath) return;
+    const src = cacheBust(basePath + 'audio.mp3');
+    try {
+      const head = await fetch(src, { method: 'HEAD' });
+      if (!head.ok) return;
+      const a = new Audio(src);
+      a.loop = true;
+      a.muted = true; // zaczynamy wyciszeni – użytkownik może włączyć
+      await a.play().catch(() => {});
+      state.audioEl = a;
+      state.audioAvailable = true;
+      el.btnAudio.hidden = false;
+    } catch { }
+  }
 
-      applyWorkareaLayout();
-    } catch(err) {
-      alert(err.message);
-      console.error(err);
+  function stopAudio() {
+    if (state.audioEl) { state.audioEl.pause(); state.audioEl.currentTime = 0; }
+  }
+
+  function albumPath() {
+    if (!clientParam || !showParam) return '';
+    return `albums/${clientParam}/${showParam}/`;
+  }
+
+  async function loadSlides() {
+    const base = albumPath();
+    if (!base) return;
+    // Try manifest.json
+    try {
+      const res = await fetch(cacheBust(base + 'manifest.json'));
+      if (res.ok) {
+        const m = await res.json();
+        state.slides = (m.slides || []).map(s => ({...s, src: base + s.file}));
+      } else {
+        await fallbackNumbered(base);
+      }
+    } catch { await fallbackNumbered(base); }
+    sortSlides();
+    state.current = 0;
+    setSlide(0);
+  }
+
+  async function fallbackNumbered(base) {
+    // Probe 01..999 (jpg/png), stop after first gap when we already found some and then 3 consecutive misses
+    const pad = (n) => n.toString().padStart(2,'0');
+    const found = [];
+    let misses = 0; let started = false;
+    for (let i=1; i<=999; i++) {
+      const nameJ = `${pad(i)}.jpg`;
+      const nameP = `${pad(i)}.png`;
+      const urlJ = cacheBust(base + nameJ);
+      const urlP = cacheBust(base + nameP);
+      const okJ = await fetch(urlJ, { method: 'HEAD' }).then(r => r.ok).catch(()=>false);
+      let ok = okJ, file = nameJ, src = base + nameJ;
+      if (!okJ) {
+        const okP = await fetch(urlP, { method: 'HEAD' }).then(r => r.ok).catch(()=>false);
+        ok = okP; file = nameP; src = base + nameP;
+      }
+      if (ok) { found.push({ file, src }); started = true; misses = 0; }
+      else if (started) { misses++; if (misses >= 3) break; }
     }
-  })();
-});
+    state.slides = found;
+  }
+
+  function prefetchNeighbors() {
+    const idxs = [state.current+1, state.current-1].map(i => (i + state.slides.length) % state.slides.length);
+    idxs.forEach(i => { const s = state.slides[i]; if (!s) return; const img = new Image(); img.src = cacheBust(s.src); });
+  }
+
+  function initFromSettingsUI() {
+    el.optMargin.value = String(state.marginPct);
+    el.optInterval.value = String(state.intervalSec);
+    el.optSortBy.value = state.sortBy;
+    el.optDirection.value = state.direction;
+    applyMargin();
+  }
+
+  // Fullscreen exit handlers
+  document.addEventListener('fullscreenchange', () => {
+    if (!document.fullscreenElement) {
+      pause();
+      stopAudio();
+      if (state.wakeLock) try { state.wakeLock.release(); } catch { }
+    }
+  });
+
+  // Start button
+  el.btnStart.addEventListener('click', requestFullscreenAndStart);
+
+  // Init
+  bindControls();
+  loadSettings();
+  initFromSettingsUI();
+  if (clientParam && showParam) {
+    // If album specified, allow starting without catalog
+    el.btnOpenCatalog.style.display = 'inline-block';
+  }
+
+  // Splash behavior: if no client/show, user must pick a show
+  if (clientParam && showParam) {
+    // Preload slides metadata so we can start immediately after click
+    loadSlides();
+  } else {
+    // Nothing selected; force open catalog on splash
+    el.btnOpenCatalog.click();
+  }
+
+  // After start, show and control slideshow
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && el.splash.style.display !== 'none') { requestFullscreenAndStart(); }
+  });
+
+  // After splash hidden, if slides available and not playing, show first slide
+  const observer = new MutationObserver(() => {
+    if (el.splash.style.display === 'none') {
+      if (state.slides.length === 0) loadSlides();
+      setTimeout(() => showHUD(), 100);
+    }
+  });
+  observer.observe(el.splash, { attributes: true, attributeFilter: ['style'] });
+
+})();
