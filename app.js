@@ -1,6 +1,6 @@
 
 (() => {
-  const VERSION = "1757921330";
+  const VERSION = "1757925452";
   const qs = new URLSearchParams(location.search);
   const clientParam = qs.get('client') || '';
   const showParam = qs.get('show') || '';
@@ -47,7 +47,6 @@
     catalogList: document.getElementById('catalogList'),
   };
 
-  // Apply margin variable
   const applyMargin = () => {
     document.documentElement.style.setProperty('--margin', state.marginPct);
     const inner = document.querySelector('.frameInner');
@@ -158,8 +157,6 @@
     el.btnAudio.addEventListener('click', () => {
       if (!state.audioEl) return;
       state.audioEl.muted = !state.audioEl.muted;
-      el.btnAudio.textContent = state.audioEl.muted ? '🎵' : '🎵';
-      el.btnAudio.title = state.audioEl.muted ? 'Wycisz' : 'Wycisz';
     });
 
     // Settings modal
@@ -298,7 +295,6 @@
   }
 
   async function fallbackNumbered(base) {
-    // Probe 01..999 (jpg/png), stop after first gap when we already found some and then 3 consecutive misses
     const pad = (n) => n.toString().padStart(2,'0');
     const found = [];
     let misses = 0; let started = false;
@@ -349,25 +345,19 @@
   loadSettings();
   initFromSettingsUI();
   if (clientParam && showParam) {
-    // If album specified, allow starting without catalog
     el.btnOpenCatalog.style.display = 'inline-block';
   }
 
-  // Splash behavior: if no client/show, user must pick a show
   if (clientParam && showParam) {
-    // Preload slides metadata so we can start immediately after click
     loadSlides();
   } else {
-    // Nothing selected; force open catalog on splash
     el.btnOpenCatalog.click();
   }
 
-  // After start, show and control slideshow
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && el.splash.style.display !== 'none') { requestFullscreenAndStart(); }
   });
 
-  // After splash hidden, if slides available and not playing, show first slide
   const observer = new MutationObserver(() => {
     if (el.splash.style.display === 'none') {
       if (state.slides.length === 0) loadSlides();

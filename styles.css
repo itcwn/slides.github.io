@@ -15,13 +15,14 @@ body {
 #splash {
   position: fixed; inset: 0; display: grid; place-items: center; gap: 24px; background: #000; z-index: 40;
   padding: 24px; text-align: center;
+  overflow: auto; -webkit-overflow-scrolling: touch;
 }
 .splash-card { max-width: 720px; width: 100%; }
 .logos { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-bottom: 16px; }
 .logo-box {
-  background: #111; border: 2px solid #fff; border-radius: 16px; padding: 12px; width: 160px; height: 160px; display: grid; place-items: center;
+  background: #fff; border: 2px solid #fff; border-radius: 16px; padding: 12px; width: 160px; height: 160px; display: grid; place-items: center;
 }
-.logo-box img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.logo-box img { max-width: 100%; max-height: 100%; object-fit: contain; filter: none; }
 
 .splash-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 button, .btn {
@@ -38,15 +39,27 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   box-shadow: 0 0 0 0 rgba(0,0,0,0);
 }
 
-/* HUD */
+/* HUD - single bottom bar */
 #hud { position: fixed; inset: 0; z-index: 20; pointer-events: none; }
-#hudTop, #hudBottom { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; gap: 10px; }
-#hudTop { position: absolute; top: 0; width: 100%; }
-#hudBottom { position: absolute; bottom: 0; width: 100%; }
-.hud-group { display: flex; gap: 8px; }
-.hud-btn { pointer-events: auto; background: rgba(255,255,255,.9); color: #000; border-radius: 10px; border: none; padding: 10px 12px; font-size: 18px; }
+#hudBottom, .hudBar {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+  gap: 10px;
+  overflow-x: auto; overflow-y: hidden; flex-wrap: nowrap;
+  background: linear-gradient(to top, rgba(0,0,0,.6), rgba(0,0,0,0));
+  -webkit-overflow-scrolling: touch;
+  pointer-events: auto;
+}
+.hud-group { display: inline-flex; gap: 8px; flex: 0 0 auto; }
+.hud-btn {
+  pointer-events: auto; background: rgba(255,255,255,.9); color: #000; border-radius: 10px; border: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 44px; min-height: 44px; line-height: 1; font-size: 18px;
+  padding: 10px 12px;
+}
 .hud-btn[hidden] { display: none; }
-.counter { background: rgba(0,0,0,.6); color: #fff; padding: 6px 10px; border-radius: 999px; font-variant-numeric: tabular-nums; }
+.counter { background: rgba(0,0,0,.6); color: #fff; padding: 6px 10px; border-radius: 999px; font-variant-numeric: tabular-nums; flex: 0 0 auto; }
 .hud-hidden { opacity: 0; transition: opacity var(--hud-fade); }
 .hud-visible { opacity: 1; transition: opacity var(--hud-fade); }
 

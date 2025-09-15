@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Pokaz slajdów – Minimal</title>
-  <link id="main-css" rel="stylesheet" href="styles.css?v=1757921330">
+  <link id="main-css" rel="stylesheet" href="styles.css?v=1757925452">
 </head>
 <body>
   <!-- Splash / start screen -->
@@ -12,8 +12,8 @@
     <div class="splash-card">
       <h1 id="splashTitle">Pokaz slajdów</h1>
       <div class="logos">
-        <div class="logo-box"><img id="logoClient" alt="Logo klienta" src="assets/logos/client.png?v=1757921330"></div>
-        <div class="logo-box"><img id="logoPhotographer" alt="Logo fotografa" src="assets/logos/photographer.png?v=1757921330"></div>
+        <div class="logo-box"><img id="logoClient" alt="Logo klienta" src="assets/logos/client.png?v=1757925452"></div>
+        <div class="logo-box"><img id="logoPhotographer" alt="Logo fotografa" src="assets/logos/photographer.png?v=1757925452"></div>
       </div>
       <p>Ten pokaz wymaga pełnego ekranu i interakcji użytkownika, aby odtworzyć audio i zapobiec wygaszaniu ekranu.</p>
       <div class="splash-actions">
@@ -30,9 +30,9 @@
     </div>
   </main>
 
-  <!-- HUD -->
+  <!-- HUD (bottom bar) -->
   <div id="hud" class="hud-hidden" aria-hidden="true">
-    <div id="hudTop">
+    <div id="hudBottom" class="hudBar">
       <div class="hud-group">
         <button class="hud-btn" id="btnPrev" aria-label="Poprzedni">⏮️</button>
         <button class="hud-btn" id="btnPlayPause" aria-label="Odtwórz/Pauza">▶️</button>
@@ -45,7 +45,6 @@
         <button class="hud-btn" id="btnCatalog" aria-label="Katalog pokazów">📂</button>
       </div>
     </div>
-    <div id="hudBottom"></div>
   </div>
 
   <!-- Modal: Settings -->
@@ -94,6 +93,6 @@
     </form>
   </dialog>
 
-  <script src="app.js?v=1757921330"></script>
+  <script src="app.js?v=1757925452"></script>
 </body>
 </html>
