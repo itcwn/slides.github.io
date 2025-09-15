@@ -34,6 +34,8 @@
     btnPlayPause: document.getElementById('btnPlayPause'),
     btnSettings: document.getElementById('btnSettings'),
     btnCatalog: document.getElementById('btnCatalog'),
+    btnHome: document.getElementById('btnHome'),
+    stage: document.getElementById('stage'),
     btnAudio: document.getElementById('btnAudio'),
     counter: document.getElementById('counter'),
     modalSettings: document.getElementById('modalSettings'),
@@ -53,6 +55,22 @@
     if (inner) inner.style.margin = state.marginPct + '%';
     el.optMarginOut.textContent = state.marginPct + '%';
   };
+
+  const clamp = (v,min,max) => Math.max(min, Math.min(max, v));
+  function adjustMargin(delta) {
+    const before = state.marginPct;
+    state.marginPct = clamp(state.marginPct + delta, 0, 20);
+    if (state.marginPct !== before) {
+      applyMargin();
+      // Sync UI
+      if (el.optMargin) el.optMargin.value = String(state.marginPct);
+      if (el.optMarginOut) el.optMarginOut.textContent = state.marginPct + '%';
+      try { localStorage.setItem(state.key(), JSON.stringify({ 
+        intervalSec: state.intervalSec, marginPct: state.marginPct, sortBy: state.sortBy, direction: state.direction 
+      })); } catch {}
+      showHUD();
+    }
+  }
 
   function saveSettings() {
     const data = {
@@ -145,12 +163,59 @@
   }
 
   function bindControls() {
+    // Tap & Hold margin adjust: left half = +1%/s, right half = -1%/s
+    let holdInterval = null;
+    let holdActive = false;
+    let holdDir = 0;
+    let holdStartX = 0, holdStartY = 0;
+    const HOLD_THRESHOLD = 25; // px; if user moves more, treat as swipe and cancel hold
+
+    const startHold = (clientX, clientY) => {
+      if (el.splash && el.splash.style.display !== 'none') return;
+      if (holdActive) return;
+      if (document.querySelector('#hud:hover')) return; // rough guard
+      const half = window.innerWidth / 2;
+      holdDir = clientX < half ? +1 : -1;
+      holdActive = true;
+      holdStartX, holdStartY = clientX, clientY;
+      // First tick after 1s, then every 1s
+      holdInterval = setInterval(() => adjustMargin(holdDir), 1000);
+    };
+    const cancelHold = () => {
+      if (holdInterval) clearInterval(holdInterval);
+      holdInterval = null;
+      holdActive = false;
+      holdDir = 0;
+    };
+
+    // Pointer-based (covers touch/mouse)
+    el.stage.addEventListener('pointerdown', (e) => {
+      if (e.target.closest('#hud') || e.target.closest('dialog')) return;
+      startHold(e.clientX, e.clientY);
+    });
+    window.addEventListener('pointermove', (e) => {
+      if (!holdActive) return;
+      const dx = Math.abs(e.clientX - holdStartX);
+      const dy = Math.abs(e.clientY - holdStartY);
+      if (dx > HOLD_THRESHOLD || dy > HOLD_THRESHOLD) cancelHold();
+    }, { passive: true });
+    ['pointerup','pointercancel','pointerleave'].forEach(ev => {
+      window.addEventListener(ev, cancelHold, { passive: true });
+    });
+
+    // Tap-to-adjust margin on stage: left half = increase, right half = decrease
+    const handleTapAdjust = (x) => {
+      const half = window.innerWidth / 2;
+      if (x < half) adjustMargin(+1); else adjustMargin(-1);
+    };
+
     // Buttons
     el.btnPrev.addEventListener('click', () => { prev(); showHUD(); });
     el.btnNext.addEventListener('click', () => { next(); showHUD(); });
     el.btnPlayPause.addEventListener('click', () => { togglePlay(); showHUD(); });
     el.btnSettings.addEventListener('click', () => el.modalSettings.showModal());
     el.btnCatalog.addEventListener('click', () => openCatalog());
+    el.btnHome.addEventListener('click', async () => { try { if (document.fullscreenElement) await document.exitFullscreen(); } catch(e){} showHUD(); });
     el.btnOpenCatalog.addEventListener('click', () => openCatalog());
 
     // Audio
@@ -177,11 +242,12 @@
     let startX = null, startY = null;
     window.addEventListener('touchstart', (e) => { const t = e.changedTouches[0]; startX = t.clientX; startY = t.clientY; });
     window.addEventListener('touchend', (e) => {
-      const t = e.changedTouches[0]; if (startX==null) return;
+const t = e.changedTouches[0]; if (startX==null) return;
       const dx = t.clientX - startX; const dy = t.clientY - startY;
       if (Math.abs(dx) > 30 && Math.abs(dx) > Math.abs(dy)) { if (dx < 0) next(); else prev(); showHUD(); }
       startX = startY = null;
-    });
+    
+});
 
     // Show HUD on pointer activity
     ['mousemove','pointerdown','touchstart'].forEach(ev => window.addEventListener(ev, showHUD));
