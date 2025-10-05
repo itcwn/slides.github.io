@@ -3,89 +3,179 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Pudełko 3D – obrót myszką</title>
+  <title>Pudełko 3D + naklejka — stabilna wersja</title>
   <style>
-    html,body{height:100%;margin:0}
-    body{font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:#0f1217;color:#e6edf3}
-    #app{display:grid;grid-template-rows:auto 1fr auto;min-height:100%}
-    header,footer{padding:10px 14px;background:#0b0f14;border-bottom:1px solid #1f2430}
-    footer{border-top:1px solid #1f2430;border-bottom:none;font-size:12px;color:#9fb0c0}
-    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-    .viewer{position:relative}
-    canvas{display:block;width:100%;height:calc(100vh - 120px)}
-    .hint{position:absolute;left:10px;bottom:10px;background:#0b0f14aa;border:1px solid #1f2430;border-radius:8px;padding:6px 8px;font-size:12px;color:#9fb0c0}
-    label,input,button{font-size:14px}
-    input[type="file"],button{background:#0f141c;color:#e6edf3;border:1px solid #243244;border-radius:8px;padding:6px 10px}
-    input[type="range"]{accent-color:#8ab4f8}
+    :root{--bg:#0e1116;--panel:#0c1016;--line:#1f2a37;--text:#e6edf3;--muted:#9fb0c0}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+    .wrap{display:grid;grid-template-columns:1fr 360px;min-height:100vh}
+    .view{position:relative;min-height:60vh}
+    canvas#three{display:block;width:100%;height:100%}
+    aside{padding:14px;border-left:1px solid var(--line);background:var(--panel)}
+    h1{font-size:16px;margin:10px 0 14px}
+    .row{margin-bottom:12px}
+    label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+    input,select,button{width:100%;background:#0f141c;border:1px solid #243244;color:var(--text);border-radius:8px;padding:8px}
+    input[type=file]{padding:6px}
+    input[type=range]{padding:0}
+    .hint{position:absolute;left:10px;bottom:10px;background:#0b0f14cc;border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:12px;color:var(--muted)}
+    .log{position:absolute;left:10px;top:10px;max-width:50ch;background:#0b0f14cc;border:1px solid var(--line);border-radius:8px;padding:8px;font-size:12px;color:var(--muted);white-space:pre-wrap}
+    .ok{color:#88d28d}
+    .err{color:#ff9aa2}
+    .small{font-size:12px;color:var(--muted)}
+    @media (max-width: 980px){.wrap{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
-<div id="app">
-  <header>
-    <div class="row">
-      <strong>Pudełko 3D</strong>
-      <span style="color:#9fb0c0">• Obracaj: lewy klawisz myszy • Zoom: kółko • Przesuwaj: prawy</span>
+  <div class="wrap">
+    <div class="view">
+      <canvas id="three"></canvas>
+      <div class="hint">Obrót: lewy przycisk • Przesuwanie: prawy • Zoom: kółko</div>
+      <div id="log" class="log" hidden></div>
     </div>
-  </header>
-
-  <div class="viewer">
-    <canvas id="three"></canvas>
-    <div class="hint">Autoobrót: <input id="autorotate" type="checkbox"> &nbsp;Prędkość <input id="speed" type="range" min="0" max="5" step="0.1" value="1"></div>
+    <aside>
+      <h1>Pudełko 3D + naklejka (upload)</h1>
+      <div class="row">
+        <label>Grafika naklejki (PNG/JPG/SVG)</label>
+        <input id="file" type="file" accept="image/*" />
+        <div class="small">Duże SVG/JPG są automatycznie skalowane do 2048 px, by uniknąć utraty kontekstu WebGL.</div>
+      </div>
+      <div class="row">
+        <label>Ściana</label>
+        <select id="face">
+          <option value="0">Przód</option>
+          <option value="1">Tył</option>
+          <option value="2">Lewy bok</option>
+          <option value="3">Prawy bok</option>
+          <option value="4">Góra</option>
+          <option value="5">Dół</option>
+        </select>
+      </div>
+      <div class="row"><label>Pozycja X</label><input id="posX" type="range" min="-0.5" max="0.5" step="0.001" value="0"></div>
+      <div class="row"><label>Pozycja Y</label><input id="posY" type="range" min="-0.5" max="0.5" step="0.001" value="0"></div>
+      <div class="row"><label>Skala</label><input id="scale" type="range" min="0.05" max="1.5" step="0.01" value="0.35"></div>
+      <div class="row"><label>Obrót</label><input id="rot" type="range" min="-180" max="180" step="1" value="0"></div>
+      <div class="row"><button id="save">Pobierz render (PNG)</button></div>
+      <div class="small">Jeżeli po wgraniu pliku cokolwiek „znika”, sprawdź komunikaty w lewym górnym rogu (log).</div>
+    </aside>
   </div>
 
-  <footer>
-    Minimalny przykład: Three.js + OrbitControls z CDN. Brak zewnętrznych plików – wszystko generowane w przeglądarce.
-  </footer>
-</div>
+  <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+  <script src="https://unpkg.com/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
+  <script>
+    const canvas = document.getElementById('three');
+    const log = document.getElementById('log');
+    function msg(text, kind='ok'){ log.hidden=false; log.innerHTML += `\n<span class="${kind}">• ${text}</span>`; }
 
-<!-- Three.js -->
-<script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
-<script src="https://unpkg.com/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
-<script>
-  const canvas = document.getElementById('three');
-  const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
-  const scene = new THREE.Scene(); scene.background = new THREE.Color(0x0f1217);
-  const camera = new THREE.PerspectiveCamera(50, 1, 0.01, 100);
-  camera.position.set(1.8,1.3,1.8);
-  const controls = new THREE.OrbitControls(camera, canvas); controls.enableDamping = true;
+    const renderer = new THREE.WebGLRenderer({canvas, antialias:true, preserveDrawingBuffer:true});
+    const scene = new THREE.Scene(); scene.background = new THREE.Color(0x0e1116);
+    const camera = new THREE.PerspectiveCamera(50, 1, 0.01, 100); camera.position.set(1.7,1.2,1.7);
+    const controls = new THREE.OrbitControls(camera, canvas); controls.enableDamping = true;
 
-  // Światła + podłoga
-  scene.add(new THREE.HemisphereLight(0xffffff, 0x2a3340, 0.8));
-  const sun = new THREE.DirectionalLight(0xffffff, 0.9); sun.position.set(2,2,1); scene.add(sun);
-  const floor = new THREE.Mesh(new THREE.PlaneGeometry(10,10), new THREE.MeshStandardMaterial({color:0x0b0f14, roughness:1}));
-  floor.rotation.x = -Math.PI/2; floor.position.y = -0.01; scene.add(floor);
+    // WebGL context loss handling (częsta przyczyna „zniknięcia” sceny)
+    canvas.addEventListener('webglcontextlost', (e)=>{ e.preventDefault(); msg('Utrata kontekstu WebGL – przywracam…','err'); });
+    canvas.addEventListener('webglcontextrestored', ()=>{ msg('Kontekst WebGL przywrócony.','ok'); redrawAll(); });
 
-  // Pudełko 3D (prostokątny karton) – wymiary przykładowe
-  const L=0.22, H=0.12, W=0.16; // metry; nie ma to znaczenia, chodzi o proporcje
+    // światła i podłoga
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x2a3340, .8));
+    const d = new THREE.DirectionalLight(0xffffff,.9); d.position.set(2,2,1); scene.add(d);
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(10,10), new THREE.MeshStandardMaterial({color:0x0b0f14, roughness:1}));
+    floor.rotation.x = -Math.PI/2; floor.position.y = -0.01; scene.add(floor);
 
-  // Proste "kartonowe" materiały na każdą ścianę (CanvasTexture)
-  function cardCanvas(){
-    const c=document.createElement('canvas'); c.width=c.height=512; const ctx=c.getContext('2d');
-    const g=ctx.createLinearGradient(0,0,0,512); g.addColorStop(0,'#b88b55'); g.addColorStop(1,'#a7773f');
-    ctx.fillStyle=g; ctx.fillRect(0,0,512,512); ctx.strokeStyle='rgba(0,0,0,.15)'; ctx.lineWidth=2; ctx.strokeRect(4,4,504,504); return new THREE.CanvasTexture(c);
-  }
-  const mats = Array.from({length:6}, ()=> new THREE.MeshStandardMaterial({map:cardCanvas(), roughness:.95}));
-  const box = new THREE.Mesh(new THREE.BoxGeometry(L,H,W), mats); box.castShadow=true; scene.add(box);
+    // pudełko
+    const L=0.22, H=0.12, W=0.16;
 
-  function resize(){
-    const r = canvas.getBoundingClientRect();
-    renderer.setSize(r.width || window.innerWidth, r.height || (window.innerHeight-120), false);
-    camera.aspect = (r.width || window.innerWidth) / (r.height || (window.innerHeight-120));
-    camera.updateProjectionMatrix();
-  }
-  window.addEventListener('resize', resize, {passive:true}); resize();
+    function makeFace(){
+      const c = document.createElement('canvas'); c.width=c.height=1024; const ctx = c.getContext('2d');
+      const g=ctx.createLinearGradient(0,0,0,1024); g.addColorStop(0,'#b88b55'); g.addColorStop(1,'#a7773f');
+      ctx.fillStyle=g; ctx.fillRect(0,0,1024,1024);
+      ctx.strokeStyle='rgba(0,0,0,.15)'; ctx.lineWidth=2; ctx.strokeRect(4,4,1016,1016);
+      return {canvas:c, ctx, logo:null, pos:{x:0,y:0,s:.35,r:0}};
+    }
+    const faces = Array.from({length:6}, makeFace);
 
-  const auto = document.getElementById('autorotate');
-  const speed = document.getElementById('speed');
+    const materials = faces.map(f=> new THREE.MeshStandardMaterial({map:new THREE.CanvasTexture(f.canvas), roughness:.95}));
+    const box = new THREE.Mesh(new THREE.BoxGeometry(L,H,W), materials); box.castShadow=true; scene.add(box);
 
-  function loop(){
-    controls.autoRotate = auto.checked;
-    controls.autoRotateSpeed = +speed.value; // domyślnie 2.0
-    controls.update();
-    renderer.render(scene, camera);
-    requestAnimationFrame(loop);
-  }
-  loop();
-</script>
+    function redraw(i){
+      const f = faces[i]; const {ctx, canvas, logo, pos} = f; const W=canvas.width, H=canvas.height;
+      // tło kartonu
+      const g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,'#b88b55'); g.addColorStop(1,'#a7773f');
+      ctx.clearRect(0,0,W,H); ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+      ctx.strokeStyle='rgba(0,0,0,.15)'; ctx.lineWidth=2; ctx.strokeRect(4,4,W-8,H-8);
+      if(logo){
+        try{
+          ctx.save();
+          const cx=W/2 + pos.x*W, cy=H/2 - pos.y*H; const s=Math.min(W,H)*pos.s; const ar=logo.width/logo.height;
+          ctx.translate(cx,cy); ctx.rotate(pos.r*Math.PI/180);
+          ctx.drawImage(logo, -s/2, -(s/2)/ar, s, s/ ar);
+          ctx.restore();
+        }catch(e){ msg('Nie udało się narysować grafiki na teksturze: '+e.message, 'err'); }
+      }
+      materials[i].map.needsUpdate = true;
+    }
+    function redrawAll(){ for(let i=0;i<6;i++) redraw(i); }
+
+    // responsywność – upewnij się, że mamy rozmiar już na starcie
+    function resize(){
+      const rect = canvas.parentElement.getBoundingClientRect();
+      const w = Math.max(320, rect.width|0); const h = Math.max(240, (rect.height|| (window.innerHeight-60))|0);
+      renderer.setSize(w, h, false); camera.aspect = w/h; camera.updateProjectionMatrix();
+    }
+    window.addEventListener('resize', resize, {passive:true});
+
+    // UI
+    let current = 0;
+    const faceSel = document.getElementById('face');
+    const posX = document.getElementById('posX');
+    const posY = document.getElementById('posY');
+    const scale = document.getElementById('scale');
+    const rot = document.getElementById('rot');
+
+    faceSel.addEventListener('change', ()=>{ current = +faceSel.value; redraw(current); });
+    function update(){ const f = faces[current]; f.pos.x=+posX.value; f.pos.y=+posY.value; f.pos.s=+scale.value; f.pos.r=+rot.value; redraw(current); }
+    ;[posX,posY,scale,rot].forEach(el=>el.addEventListener('input', update));
+
+    // Upload — bezpieczna rasteryzacja + ograniczenie rozmiaru do 2048 px
+    function rasterizeImage(file){
+      return new Promise((resolve,reject)=>{
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = ()=>{
+          // downscale jeśli za duże (ochrona przed utratą kontekstu na słabszych GPU)
+          const maxSide = 2048; let {width:w, height:h} = img;
+          const scale = Math.min(1, maxSide/Math.max(w,h));
+          if(scale < 1){ w = Math.round(w*scale); h = Math.round(h*scale); }
+          const c=document.createElement('canvas'); c.width=w; c.height=h; const ctx=c.getContext('2d');
+          try{ ctx.drawImage(img,0,0,w,h); }catch(e){ URL.revokeObjectURL(url); return reject(e); }
+          const bImg = new Image(); bImg.onload = ()=>{ resolve(bImg); URL.revokeObjectURL(url); };
+          bImg.src = c.toDataURL('image/png'); // bezpieczny, ten sam origin
+        };
+        img.onerror = ()=>{ reject(new Error('Nie można wczytać obrazu.')) };
+        img.src = url;
+      });
+    }
+
+    document.getElementById('file').addEventListener('change', async (e)=>{
+      const f = e.target.files[0]; if(!f) return;
+      try{
+        const bmp = await rasterizeImage(f);
+        faces[current].logo = bmp; redraw(current);
+        msg('Grafika załadowana i zeskalowana (jeśli potrzeba).','ok');
+      }catch(err){
+        msg('Błąd podczas przetwarzania grafiki: '+err.message, 'err');
+      }
+    });
+
+    document.getElementById('save').addEventListener('click', ()=>{
+      try{
+        const a = document.createElement('a'); a.href = renderer.domElement.toDataURL('image/png'); a.download='pudelko.png'; a.click();
+      }catch(e){ msg('Nie udało się wyeksportować PNG: '+e.message, 'err'); }
+    });
+
+    function loop(){ controls.update(); renderer.render(scene,camera); requestAnimationFrame(loop); }
+    // start
+    resize(); redrawAll(); loop();
+  </script>
 </body>
 </html>
